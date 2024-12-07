@@ -139,7 +139,7 @@ def generate_vectors():
 def generate_vectors_endpoint():
     try:
         generate_vectors()
-        return {"message": "FAISS vectors generated and saved to S3 successfully."}
+        return {"status_code": "200"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
