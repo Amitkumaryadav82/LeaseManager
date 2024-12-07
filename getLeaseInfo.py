@@ -98,24 +98,39 @@ def read_faiss_s3(s3_key,s3_bucket):
     latest_file = files[0]['Key']
     return latest_file
     
-## Since we will using AWS lambda to invoke LLM, we need to write a handler
-def lambda_handler(event, context):
-    # TODO implement body
-    event=json.loads(event['body'])
-    #@TODO: Update the event after the API Gateway configuration
-    query=event['blog_topic']
 
-    llm= get_claude_llm()
-    #@TODO: Set the S3_Key and S3_Bucket
-    vectorstore_faiss= read_faiss_s3(s3_key,s3_bucket)
+# Creating API
+@app.post("/get_lease_info")
+def get_lease_info(prompt=prompt):
+    try:
+    #TODO implement this
+        return {"status_code": "200"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    response=  get_response_llm(llm,vectorstore_faiss,query):
+if __name__ == "__main__":
+    import unvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
-    if get_response_llm:
-        print("LLM invocation successful")
 
-    else:
-        print("No blog was generated")
+# ## Since we will using AWS lambda to invoke LLM, we need to write a handler
+# def lambda_handler(event, context):
+#     # TODO implement body
+#     event=json.loads(event['body'])
+#     #@TODO: Update the event after the API Gateway configuration
+#     query=event['blog_topic']
 
-    return json.dumps(response)
+#     llm= get_claude_llm()
+#     #@TODO: Set the S3_Key and S3_Bucket
+#     vectorstore_faiss= read_faiss_s3(s3_key,s3_bucket)
+
+#     response=  get_response_llm(llm,vectorstore_faiss,query):
+
+#     if get_response_llm:
+#         print("LLM invocation successful")
+
+#     else:
+#         print("No blog was generated")
+
+#     return json.dumps(response)
 
