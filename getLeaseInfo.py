@@ -19,12 +19,8 @@ bedrock_embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1", cl
 # S3 client
 s3 = boto3.client("s3")
 
-def get_claude_llm():
-    llm = Bedrock(model_id="ai21.j2-mid-v1", client=bedrock, model_kwargs={'maxTokens': 512})
-    return llm
-
 def get_llama2_llm():
-    llm = Bedrock(model_id="meta.llama2-70b-chat-v1", client=bedrock, model_kwargs={'max_gen_len': 512})
+    llm = Bedrock(model_id="meta.llama3-2-1b-instruct-v1:0", client=bedrock, model_kwargs={'max_gen_len': 512})
     return llm
 
 prompt_template = """
@@ -78,12 +74,11 @@ def read_faiss_s3(s3_key, bucket_name):
         # Load the FAISS index with dangerous deserialization allowed
         vectorstore_faiss = FAISS.load_local(temp_dir, bedrock_embeddings, allow_dangerous_deserialization=True)
     
-    print("**************************Vectore store faiss successfull")
     return vectorstore_faiss
 
 def main():
     query = "What is the capital of France?"
-    llm = get_claude_llm()
+    llm = get_llama2_llm()  # Create the LLaMA2 model instance
     s3_key = "faiss/"
     s3_bucket = "capleasemanager"
     vectorstore_faiss = read_faiss_s3(s3_key, s3_bucket)
