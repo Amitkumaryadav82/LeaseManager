@@ -12,6 +12,8 @@ from langchain.llms.bedrock import Bedrock
 # Vector Embedding And Vector Store
 from langchain.vectorstores import FAISS
 
+# session = boto3.Session(profile_name='BedrockInvokeRole')
+
 ## Bedrock Clients
 bedrock = boto3.client(service_name="bedrock-runtime")
 bedrock_embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1", client=bedrock)
@@ -20,8 +22,14 @@ bedrock_embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1", cl
 s3 = boto3.client("s3")
 
 def get_llama2_llm():
-    llm = Bedrock(model_id="meta.llama3-2-1b-instruct-v1:0", client=bedrock, model_kwargs={'max_gen_len': 512})
-    return llm
+    try:
+        inference_profile_arn = "arn:aws:bedrock:us-east-1:835263753831:inference-profile/bedrock_invoker_policy"
+        llm = Bedrock(model_id="meta.llama3-2-1b-instruct-v1:0", 
+                client=bedrock, model_kwargs={'max_gen_len': 512, 
+                'inference_profile_arn': inference_profile_arn})
+        return llm
+    except Exception as e:
+        print (" EXCEPTION WHILE GETTING LLM") 
 
 prompt_template = """
 Human: Use the following pieces of context to provide a 
