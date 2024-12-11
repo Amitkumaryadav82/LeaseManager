@@ -12,14 +12,12 @@ from langchain.llms.bedrock import Bedrock
 # Vector Embedding And Vector Store
 from langchain.vectorstores import FAISS
 
-
 ## Bedrock Clients
 bedrock = boto3.client(service_name="bedrock-runtime")
 bedrock_embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1", client=bedrock)
 
 # S3 client
 s3 = boto3.client("s3")
-
 
 def get_mistral_llm():
     try:
@@ -29,6 +27,7 @@ def get_mistral_llm():
     except Exception as e:
         print("Exception getting Mistral: {e}")
 
+#  This model is not working as it requires inference profile and I am not able figure it out yet.
 def get_llama2_llm():
     try:
         inference_profile_arn = "arn:aws:bedrock:us-east-1:835263753831:inference-profile/us.meta.llama3-2-1b-instruct-v1:0"
@@ -93,14 +92,16 @@ def read_faiss_s3(s3_key, bucket_name):
     
     return vectorstore_faiss
 
-def main():
-    query = "What is the capital of France?"
-    llm = get_mistral_llm()  # Create the LLaMA2 model instance
-    s3_key = "faiss/"
-    s3_bucket = "capleasemanager"
-    vectorstore_faiss = read_faiss_s3(s3_key, s3_bucket)
-    response = get_response_llm(llm, vectorstore_faiss, query)
-    print("Response:", response)
+def getLeaseInfo(query):
+    try:
+        llm = get_mistral_llm()  # Create the LLaMA2 model instance
+        s3_key = "faiss/"
+        s3_bucket = "capleasemanager"
+        vectorstore_faiss = read_faiss_s3(s3_key, s3_bucket)
+        response = get_response_llm(llm, vectorstore_faiss, query)
+        print("Response:", response)
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-if __name__ == "__main__":
-    main()
+

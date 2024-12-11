@@ -22,7 +22,7 @@ prefix = 'lease/'
 s3_faiss='faiss/'
 bedrock=boto3.client(service_name="bedrock-runtime")
 bedrock_embeddings=BedrockEmbeddings(model_id="amazon.titan-embed-text-v1",client=bedrock)
-app=FastAPI()
+# app=FastAPI()
 
 #Get the documents
 def get_documents_from_s3(s3_bucket, prefix):
@@ -49,27 +49,6 @@ def get_documents_from_s3(s3_bucket, prefix):
             text_list.append(text)
 
     return text_list
-
-    
-    # # This code is for local testing only
-    # folder_path = 'testdata/'
-    # text_list = []
-
-    # # Iterate over each file in the folder
-    # for filename in os.listdir("testdata/"):
-    #     if filename.endswith('.png'):
-    #         # Open the image file
-    #         img_path = os.path.join("testdata/", filename)
-    #         img = Image.open(img_path)
-            
-    #         # Use pytesseract to extract text from the image
-    #         text = pytesseract.image_to_string(img)
-            
-    #         # Append the extracted text to the list
-    #         text_list.append(text)
-    #         return text_list
-
-    
 
 # read the texts from the documents
 def read_text_from_files(pngfiles):
@@ -133,42 +112,3 @@ def generate_vectors():
     splitted_text= data_splitter(list_text)
     vectorstore_faiss= generate_faiss(splitted_text)
     save_faiss_s3(vectorstore_faiss)
-    
-# Creating API
-@app.post("/generate-vectors")
-def generate_vectors_endpoint():
-    try:
-        generate_vectors()
-        return {"status_code": "200"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-if __name__ == "__main__":
-    import unvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-    #generate_vectors()
-    # # Example usage
-    # bucket_name = 'capleasemanager'
-    # prefix = 'lease/'
-    # text_list = get_documents_from_s3(bucket_name, prefix)
-
-    # # Print the list of extracted texts
-    # for text in text_list:
-    #     print(text)
-    
-
-#Commenting this function since I will not be using Lambda  anymore
-###def lambda_handler(event, context):
-    #read the documents
-    #documents = read_documents_from_s3(s3_bucket)
-    #split document
-    #split_doc = data_splitter(documents)
-    #generate faiss
-    #faiss_index = generate_faiss(split_docs)
-    #Store faiss in S3
-    #save_faiss_s3(faiss_index)
-
-   # return {
-    #    'statusCode': 200,
-     #   'body': json.dumps('Hello from Lambda!')
-    #}#
