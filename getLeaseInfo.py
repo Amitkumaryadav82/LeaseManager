@@ -11,6 +11,7 @@ from langchain.llms.bedrock import Bedrock
 
 # Vector Embedding And Vector Store
 from langchain.vectorstores import FAISS
+import promptsLibrary
 
 ## Bedrock Clients
 bedrock = boto3.client(service_name="bedrock-runtime")
@@ -105,3 +106,48 @@ def getLeaseInfo(query):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# def getLeaseInfo(query):
+#     try:
+#         # for filename in os.listdir('figures'):
+#         # file_path = os.path.join('figures', filename)
+#         # if os.path.isfile(file_path) and filename != '__init__.py':
+#         #     os.remove(file_path)  # Remove file
+
+#          # Route the user request to necessary chain
+#         clf_label = clf_chain.invoke({"request":query})
+
+#         if "need sql" in clf_label.lower():
+#             ## Generate code for insights
+#             code_response = sql_code_chain.invoke({"request": query})
+#             # print(code_response)
+#             ## Execute code
+#             output = repl_tool.run(code_response)
+#             # print(output)
+#         elif "non sql" in clf_label.lower():
+#             output = gnrl_chain.invoke({"request": query})
+#         else:
+#             output = "The request is out of context."
+
+#         # Generate suggestions
+#         # TODO: Do we need it?
+#         # suggest = sug_chain.invoke({"request": query})
+        
+#         # If image is present inside 'figures' directory then Send the plot image to the chat
+#         # if len(os.listdir('figures')) > 1:
+#         #     for imgfile in os.listdir('figures'): 
+#         #         print(imgfile)
+#         #         if os.path.isfile(os.path.join('figures', imgfile)) and imgfile != '__init__.py':
+#         #             # Attach the image to the message and send response, image, and suggestions
+#         #             image = cl.Image(path="./figures/"+imgfile, name="image1", size="large", display="inline")
+#         #             await cl.Message(
+#         #                 content=f"Response: \n{output}", 
+#         #                 elements=[image]
+#         #                 ).send()
+#         #             await cl.Message(content=f"Further suggestions: \n{suggest}",).send()
+#         # else:
+#         #     # Send response and suggestions
+#         #     await cl.Message(content=f"Response: \n{output}",).send()
+#         #     await cl.Message(content=f"Further suggestions: \n{suggest}",).send()
+#         return output
+#     except Exception as e:
+#         raise HTTPException (status_code=500,detail=str(e))

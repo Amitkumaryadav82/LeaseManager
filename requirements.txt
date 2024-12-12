@@ -8,5 +8,6 @@ uvicorn
 langchain-community
 pillow
 faiss-cpu
-uvicorn
+langchain_experimental
+
 
