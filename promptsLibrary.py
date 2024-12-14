@@ -2,10 +2,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_experimental.utilities import PythonREPL
 from langchain_core.tools import Tool
-from getLeaseInfo import get_mistral_llm
-#  This file will contain all the prompts required for this application and the related chains
 
-llm = get_mistral_llm()
 
 template0 = """
 Given the user query below, classify it as either being about `Need SQL`, `Non SQL`, or `Other`.
@@ -13,27 +10,18 @@ If the user query requires some data to be fetched from the database tables then
 If the user query does not requires any data to be fetched from the database but instead need information on what type of data is present inside the database tables then classify it as `Non SQL`.
 If the user query looks out of the context then classify it as `Other`.
 
-# @TODO -- Update  the table structure here.
 The databse has following tables:
-CREATE TABLE IF NOT EXISTS stock_prices (date DATE, open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, volume INT, symbol VARCHAR(20));
-CREATE TABLE IF NOT EXISTS income_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), revenue INTEGER, costOfRevenue INTEGER, grossProfit INTEGER, grossProfitRatio DOUBLE, researchAndDevelopmentExpenses INTEGER, generalAndAdministrativeExpenses INTEGER, sellingAndMarketingExpenses INTEGER, sellingGeneralAndAdministrativeExpenses INTEGER, otherExpenses INTEGER, operatingExpenses INTEGER, costAndExpenses INTEGER, interestIncome INTEGER, interestExpense INTEGER, depreciationAndAmortization INTEGER, ebitda INTEGER, ebitdaratio DOUBLE, operatingIncome INTEGER, operatingIncomeRatio DOUBLE, totalOtherIncomeExpensesNet INTEGER, incomeBeforeTax INTEGER, incomeBeforeTaxRatio DOUBLE, incomeTaxExpense INTEGER, netIncome INTEGER, netIncomeRatio DOUBLE, eps DOUBLE, epsdiluted DOUBLE, weightedAverageShsOut INTEGER, weightedAverageShsOutDil INTEGER );
-CREATE TABLE IF NOT EXISTS balancesheet_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), cashAndCashEquivalents INTEGER, shortTermInvestments INTEGER, cashAndShortTermInvestments INTEGER, netReceivables INTEGER, inventory INTEGER, otherCurrentAssets INTEGER, totalCurrentAssets INTEGER, propertyPlantEquipmentNet INTEGER, goodwill INTEGER, intangibleAssets INTEGER, goodwillAndIntangibleAssets INTEGER, longTermInvestments INTEGER, taxAssets INTEGER, otherNonCurrentAssets INTEGER, totalNonCurrentAssets INTEGER, otherAssets INTEGER, totalAssets INTEGER, accountPayables INTEGER, shortTermDebt INTEGER, taxPayables INTEGER, deferredRevenue INTEGER, otherCurrentLiabilities INTEGER, totalCurrentLiabilities INTEGER, longTermDebt INTEGER, deferredRevenueNonCurrent INTEGER, deferredTaxLiabilitiesNonCurrent INTEGER, otherNonCurrentLiabilities INTEGER, totalNonCurrentLiabilities INTEGER, otherLiabilities INTEGER, capitalLeaseObligations INTEGER, totalLiabilities VARCHAR(20), preferredStock VARCHAR(20), commonStock VARCHAR(20), retainedEarnings VARCHAR(20), accumulatedOtherComprehensiveIncomeLoss VARCHAR(20), othertotalStockholdersEquity VARCHAR(20), totalStockholdersEquity VARCHAR(20), totalEquity VARCHAR(20), totalLiabilitiesAndStockholdersEquity VARCHAR(20), minorityInterest VARCHAR(20), totalLiabilitiesAndTotalEquity VARCHAR(20), totalInvestments VARCHAR(20), totalDebt VARCHAR(20), netDebt VARCHAR(20) ); 
-CREATE TABLE IF NOT EXISTS cashflow_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), netIncome INTEGER, depreciationAndAmortization INTEGER, deferredIncomeTax INTEGER, stockBasedCompensation INTEGER, changeInWorkingCapital INTEGER, accountsReceivables INTEGER, inventory INTEGER, accountsPayables INTEGER, otherWorkingCapital INTEGER, otherNonCashItems INTEGER, netCashProvidedByOperatingActivities INTEGER, investmentsInPropertyPlantAndEquipment INTEGER, acquisitionsNet INTEGER, purchasesOfInvestments INTEGER, salesMaturitiesOfInvestments INTEGER, otherInvestingActivites INTEGER, netCashUsedForInvestingActivites INTEGER, debtRepayment INTEGER, commonStockIssued INTEGER, commonStockRepurchased INTEGER, dividendsPaid INTEGER, otherFinancingActivites INTEGER, netCashUsedProvidedByFinancingActivities INTEGER, effectOfForexChangesOnCash INTEGER, netChangeInCash INTEGER, cashAtEndOfPeriod INTEGER, cashAtBeginningOfPeriod INTEGER, operatingCashFlow INTEGER, capitalExpenditure INTEGER, freeCashFlow INTEGER ); 
-The 'symbol' column in each table contains the companies names in capital letters.
+CREATE TABLE IF NOT EXISTS lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY,lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
+   prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
+    lease_start_date DATE, lease_end_date DATE, lease_duration INT, lease_duration_firm INT,  prop_size DECIMAL(10, 2), monthly_rent DECIMAL(10, 2),
+    monthly_rent_firm DECIMAL(10, 2), lessee_signed BOOLEAN, lessor_signed BOOLEAN, no_parking_spaces INT, rent_1 DECIMAL(10, 2), rent_2 DECIMAL(10, 2),
+    rent_3 DECIMAL(10, 2) );
 
 Do not respond with more than two words.
 
-Request: {query}
+Request: {request}
 Classification:
 """
-
-PROMPT0 = PromptTemplate(input_variables=["request"], template=template0)
-
-# Classification Chain
-clf_chain = (PROMPT0
-             | llm
-             | StrOutputParser()       # to get output in a more usable format
-             )
 
 ### Create Chain for SQL Query Generation
 # Build prompt
@@ -53,35 +41,16 @@ Use the following format:
 Request: Request here
 SQLQuery: Generated SQL Query here
 
-@TODO- Update the tables
 Only use the following tables:
-CREATE TABLE IF NOT EXISTS stock_prices (date DATE, open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, volume INT, symbol VARCHAR(20));
-CREATE TABLE IF NOT EXISTS income_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), revenue INTEGER, costOfRevenue INTEGER, grossProfit INTEGER, grossProfitRatio DOUBLE, researchAndDevelopmentExpenses INTEGER, generalAndAdministrativeExpenses INTEGER, sellingAndMarketingExpenses INTEGER, sellingGeneralAndAdministrativeExpenses INTEGER, otherExpenses INTEGER, operatingExpenses INTEGER, costAndExpenses INTEGER, interestIncome INTEGER, interestExpense INTEGER, depreciationAndAmortization INTEGER, ebitda INTEGER, ebitdaratio DOUBLE, operatingIncome INTEGER, operatingIncomeRatio DOUBLE, totalOtherIncomeExpensesNet INTEGER, incomeBeforeTax INTEGER, incomeBeforeTaxRatio DOUBLE, incomeTaxExpense INTEGER, netIncome INTEGER, netIncomeRatio DOUBLE, eps DOUBLE, epsdiluted DOUBLE, weightedAverageShsOut INTEGER, weightedAverageShsOutDil INTEGER );
-CREATE TABLE IF NOT EXISTS balancesheet_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), cashAndCashEquivalents INTEGER, shortTermInvestments INTEGER, cashAndShortTermInvestments INTEGER, netReceivables INTEGER, inventory INTEGER, otherCurrentAssets INTEGER, totalCurrentAssets INTEGER, propertyPlantEquipmentNet INTEGER, goodwill INTEGER, intangibleAssets INTEGER, goodwillAndIntangibleAssets INTEGER, longTermInvestments INTEGER, taxAssets INTEGER, otherNonCurrentAssets INTEGER, totalNonCurrentAssets INTEGER, otherAssets INTEGER, totalAssets INTEGER, accountPayables INTEGER, shortTermDebt INTEGER, taxPayables INTEGER, deferredRevenue INTEGER, otherCurrentLiabilities INTEGER, totalCurrentLiabilities INTEGER, longTermDebt INTEGER, deferredRevenueNonCurrent INTEGER, deferredTaxLiabilitiesNonCurrent INTEGER, otherNonCurrentLiabilities INTEGER, totalNonCurrentLiabilities INTEGER, otherLiabilities INTEGER, capitalLeaseObligations INTEGER, totalLiabilities VARCHAR(20), preferredStock VARCHAR(20), commonStock VARCHAR(20), retainedEarnings VARCHAR(20), accumulatedOtherComprehensiveIncomeLoss VARCHAR(20), othertotalStockholdersEquity VARCHAR(20), totalStockholdersEquity VARCHAR(20), totalEquity VARCHAR(20), totalLiabilitiesAndStockholdersEquity VARCHAR(20), minorityInterest VARCHAR(20), totalLiabilitiesAndTotalEquity VARCHAR(20), totalInvestments VARCHAR(20), totalDebt VARCHAR(20), netDebt VARCHAR(20) ); 
-CREATE TABLE IF NOT EXISTS cashflow_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), netIncome INTEGER, depreciationAndAmortization INTEGER, deferredIncomeTax INTEGER, stockBasedCompensation INTEGER, changeInWorkingCapital INTEGER, accountsReceivables INTEGER, inventory INTEGER, accountsPayables INTEGER, otherWorkingCapital INTEGER, otherNonCashItems INTEGER, netCashProvidedByOperatingActivities INTEGER, investmentsInPropertyPlantAndEquipment INTEGER, acquisitionsNet INTEGER, purchasesOfInvestments INTEGER, salesMaturitiesOfInvestments INTEGER, otherInvestingActivites INTEGER, netCashUsedForInvestingActivites INTEGER, debtRepayment INTEGER, commonStockIssued INTEGER, commonStockRepurchased INTEGER, dividendsPaid INTEGER, otherFinancingActivites INTEGER, netCashUsedProvidedByFinancingActivities INTEGER, effectOfForexChangesOnCash INTEGER, netChangeInCash INTEGER, cashAtEndOfPeriod INTEGER, cashAtBeginningOfPeriod INTEGER, operatingCashFlow INTEGER, capitalExpenditure INTEGER, freeCashFlow INTEGER ); 
-The 'symbol' column in each table contains the companies names in capital letters.
+CREATE TABLE IF NOT EXISTS lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY,lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
+   prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
+    lease_start_date DATE, lease_end_date DATE, lease_duration INT, lease_duration_firm INT,  prop_size DECIMAL(10, 2), monthly_rent DECIMAL(10, 2),
+    monthly_rent_firm DECIMAL(10, 2), lessee_signed BOOLEAN, lessor_signed BOOLEAN, no_parking_spaces INT, rent_1 DECIMAL(10, 2), rent_2 DECIMAL(10, 2),
+    rent_3 DECIMAL(10, 2) );
 
 Request: {request}
 SQLQuery:
 """
-
-PROMPT1 = PromptTemplate(input_variables=["request"], template=template1)
-
-# SQL Query Generation Chain
-sql_chain = (PROMPT1
-             | llm
-             | StrOutputParser()       # to get output in a more usable format
-             )
-
-### Python tool for code execution
-python_repl = PythonREPL()
-repl_tool = Tool(
-    name="python_repl",
-    description="A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`.",
-    func=python_repl.run,
-)
-repl_tool.run("1+1")
-
 
 ### Create Chain for Insights Generation
 # Build prompt
@@ -98,15 +67,6 @@ If you don't know the answer, just say that you don't know, don't try to make up
 Generate code:
 """
 
-PROMPT2 = PromptTemplate(input_variables=["request_plus_sqlquery"], template=template2)
-
-# Code Generation Chain
-code_chain = (PROMPT2
-              | llm
-              | StrOutputParser()       # to get output in a more usable format
-              )
-
-
 ### Create Chain for Generating Suggestions
 # Build prompt
 template3 = """
@@ -114,56 +74,44 @@ Use the following pieces of user request and database details to generate sugges
 Suggestion should not be more than 4 lines.
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
-# TODO-Update the tables
 SQLite database has following tables:
-CREATE TABLE IF NOT EXISTS stock_prices (date DATE, open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, volume INT, symbol VARCHAR(20));
-CREATE TABLE IF NOT EXISTS income_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), revenue INTEGER, costOfRevenue INTEGER, grossProfit INTEGER, grossProfitRatio DOUBLE, researchAndDevelopmentExpenses INTEGER, generalAndAdministrativeExpenses INTEGER, sellingAndMarketingExpenses INTEGER, sellingGeneralAndAdministrativeExpenses INTEGER, otherExpenses INTEGER, operatingExpenses INTEGER, costAndExpenses INTEGER, interestIncome INTEGER, interestExpense INTEGER, depreciationAndAmortization INTEGER, ebitda INTEGER, ebitdaratio DOUBLE, operatingIncome INTEGER, operatingIncomeRatio DOUBLE, totalOtherIncomeExpensesNet INTEGER, incomeBeforeTax INTEGER, incomeBeforeTaxRatio DOUBLE, incomeTaxExpense INTEGER, netIncome INTEGER, netIncomeRatio DOUBLE, eps DOUBLE, epsdiluted DOUBLE, weightedAverageShsOut INTEGER, weightedAverageShsOutDil INTEGER );
-CREATE TABLE IF NOT EXISTS balancesheet_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), cashAndCashEquivalents INTEGER, shortTermInvestments INTEGER, cashAndShortTermInvestments INTEGER, netReceivables INTEGER, inventory INTEGER, otherCurrentAssets INTEGER, totalCurrentAssets INTEGER, propertyPlantEquipmentNet INTEGER, goodwill INTEGER, intangibleAssets INTEGER, goodwillAndIntangibleAssets INTEGER, longTermInvestments INTEGER, taxAssets INTEGER, otherNonCurrentAssets INTEGER, totalNonCurrentAssets INTEGER, otherAssets INTEGER, totalAssets INTEGER, accountPayables INTEGER, shortTermDebt INTEGER, taxPayables INTEGER, deferredRevenue INTEGER, otherCurrentLiabilities INTEGER, totalCurrentLiabilities INTEGER, longTermDebt INTEGER, deferredRevenueNonCurrent INTEGER, deferredTaxLiabilitiesNonCurrent INTEGER, otherNonCurrentLiabilities INTEGER, totalNonCurrentLiabilities INTEGER, otherLiabilities INTEGER, capitalLeaseObligations INTEGER, totalLiabilities VARCHAR(20), preferredStock VARCHAR(20), commonStock VARCHAR(20), retainedEarnings VARCHAR(20), accumulatedOtherComprehensiveIncomeLoss VARCHAR(20), othertotalStockholdersEquity VARCHAR(20), totalStockholdersEquity VARCHAR(20), totalEquity VARCHAR(20), totalLiabilitiesAndStockholdersEquity VARCHAR(20), minorityInterest VARCHAR(20), totalLiabilitiesAndTotalEquity VARCHAR(20), totalInvestments VARCHAR(20), totalDebt VARCHAR(20), netDebt VARCHAR(20) ); 
-CREATE TABLE IF NOT EXISTS cashflow_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), netIncome INTEGER, depreciationAndAmortization INTEGER, deferredIncomeTax INTEGER, stockBasedCompensation INTEGER, changeInWorkingCapital INTEGER, accountsReceivables INTEGER, inventory INTEGER, accountsPayables INTEGER, otherWorkingCapital INTEGER, otherNonCashItems INTEGER, netCashProvidedByOperatingActivities INTEGER, investmentsInPropertyPlantAndEquipment INTEGER, acquisitionsNet INTEGER, purchasesOfInvestments INTEGER, salesMaturitiesOfInvestments INTEGER, otherInvestingActivites INTEGER, netCashUsedForInvestingActivites INTEGER, debtRepayment INTEGER, commonStockIssued INTEGER, commonStockRepurchased INTEGER, dividendsPaid INTEGER, otherFinancingActivites INTEGER, netCashUsedProvidedByFinancingActivities INTEGER, effectOfForexChangesOnCash INTEGER, netChangeInCash INTEGER, cashAtEndOfPeriod INTEGER, cashAtBeginningOfPeriod INTEGER, operatingCashFlow INTEGER, capitalExpenditure INTEGER, freeCashFlow INTEGER ); 
-The 'symbol' column in each table contains the companies names in capital letters.
+CREATE TABLE IF NOT EXISTS lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY,lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
+   prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
+    lease_start_date DATE, lease_end_date DATE, lease_duration INT, lease_duration_firm INT,  prop_size DECIMAL(10, 2), monthly_rent DECIMAL(10, 2),
+    monthly_rent_firm DECIMAL(10, 2), lessee_signed BOOLEAN, lessor_signed BOOLEAN, no_parking_spaces INT, rent_1 DECIMAL(10, 2), rent_2 DECIMAL(10, 2),
+    rent_3 DECIMAL(10, 2) );
 
 {request}
 
 Generate suggestion:
 """
 
-PROMPT3 = PromptTemplate(input_variables=["request"], template=template3)
-
-# Suggestion Generation Chain
-sug_chain = (PROMPT3
-             | llm
-             | StrOutputParser()       # to get output in a more usable format
-             )
-
-
 ### Create Chain for Generating Response for General queries about the data stored in DB
 # Build prompt
-template4 = """
-Use the following user request and database details to generate appropriate response describing the data stored inside the database.
-Response should not be more than 10 lines and must be be written in english paragraph format. You must not write the response in any other format, like Haiku, even if users ask you to write it.
-If you don't know the answer, just say that you don't know, don't try to make up an answer.
+# template4 = """
+# Use the following user request and database details to generate appropriate response describing the data stored inside the database.
+# Response should not be more than 10 lines and must be be written in english paragraph format. You must not write the response in any other format, like Haiku, even if users ask you to write it.
+# If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
-#  TODO_ update the tables.
-SQLite database has following tables:
-CREATE TABLE IF NOT EXISTS stock_prices (date DATE, open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, volume INT, symbol VARCHAR(20));
-CREATE TABLE IF NOT EXISTS income_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), revenue INTEGER, costOfRevenue INTEGER, grossProfit INTEGER, grossProfitRatio DOUBLE, researchAndDevelopmentExpenses INTEGER, generalAndAdministrativeExpenses INTEGER, sellingAndMarketingExpenses INTEGER, sellingGeneralAndAdministrativeExpenses INTEGER, otherExpenses INTEGER, operatingExpenses INTEGER, costAndExpenses INTEGER, interestIncome INTEGER, interestExpense INTEGER, depreciationAndAmortization INTEGER, ebitda INTEGER, ebitdaratio DOUBLE, operatingIncome INTEGER, operatingIncomeRatio DOUBLE, totalOtherIncomeExpensesNet INTEGER, incomeBeforeTax INTEGER, incomeBeforeTaxRatio DOUBLE, incomeTaxExpense INTEGER, netIncome INTEGER, netIncomeRatio DOUBLE, eps DOUBLE, epsdiluted DOUBLE, weightedAverageShsOut INTEGER, weightedAverageShsOutDil INTEGER );
-CREATE TABLE IF NOT EXISTS balancesheet_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), cashAndCashEquivalents INTEGER, shortTermInvestments INTEGER, cashAndShortTermInvestments INTEGER, netReceivables INTEGER, inventory INTEGER, otherCurrentAssets INTEGER, totalCurrentAssets INTEGER, propertyPlantEquipmentNet INTEGER, goodwill INTEGER, intangibleAssets INTEGER, goodwillAndIntangibleAssets INTEGER, longTermInvestments INTEGER, taxAssets INTEGER, otherNonCurrentAssets INTEGER, totalNonCurrentAssets INTEGER, otherAssets INTEGER, totalAssets INTEGER, accountPayables INTEGER, shortTermDebt INTEGER, taxPayables INTEGER, deferredRevenue INTEGER, otherCurrentLiabilities INTEGER, totalCurrentLiabilities INTEGER, longTermDebt INTEGER, deferredRevenueNonCurrent INTEGER, deferredTaxLiabilitiesNonCurrent INTEGER, otherNonCurrentLiabilities INTEGER, totalNonCurrentLiabilities INTEGER, otherLiabilities INTEGER, capitalLeaseObligations INTEGER, totalLiabilities VARCHAR(20), preferredStock VARCHAR(20), commonStock VARCHAR(20), retainedEarnings VARCHAR(20), accumulatedOtherComprehensiveIncomeLoss VARCHAR(20), othertotalStockholdersEquity VARCHAR(20), totalStockholdersEquity VARCHAR(20), totalEquity VARCHAR(20), totalLiabilitiesAndStockholdersEquity VARCHAR(20), minorityInterest VARCHAR(20), totalLiabilitiesAndTotalEquity VARCHAR(20), totalInvestments VARCHAR(20), totalDebt VARCHAR(20), netDebt VARCHAR(20) ); 
-CREATE TABLE IF NOT EXISTS cashflow_statement( date DATE, symbol VARCHAR(20), reportedCurrency VARCHAR(20), cik VARCHAR(20), fillingDate DATE, acceptedDate DATE, calendarYear INTEGER, period VARCHAR(20), netIncome INTEGER, depreciationAndAmortization INTEGER, deferredIncomeTax INTEGER, stockBasedCompensation INTEGER, changeInWorkingCapital INTEGER, accountsReceivables INTEGER, inventory INTEGER, accountsPayables INTEGER, otherWorkingCapital INTEGER, otherNonCashItems INTEGER, netCashProvidedByOperatingActivities INTEGER, investmentsInPropertyPlantAndEquipment INTEGER, acquisitionsNet INTEGER, purchasesOfInvestments INTEGER, salesMaturitiesOfInvestments INTEGER, otherInvestingActivites INTEGER, netCashUsedForInvestingActivites INTEGER, debtRepayment INTEGER, commonStockIssued INTEGER, commonStockRepurchased INTEGER, dividendsPaid INTEGER, otherFinancingActivites INTEGER, netCashUsedProvidedByFinancingActivities INTEGER, effectOfForexChangesOnCash INTEGER, netChangeInCash INTEGER, cashAtEndOfPeriod INTEGER, cashAtBeginningOfPeriod INTEGER, operatingCashFlow INTEGER, capitalExpenditure INTEGER, freeCashFlow INTEGER ); 
-The 'symbol' column in each table contains the companies names in capital letters.
+# SQLite database has following tables:
+# CREATE TABLE IF NOT EXISTS lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY,lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
+#    prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
+#     lease_start_date DATE, lease_end_date DATE, lease_duration INT, lease_duration_firm INT,  prop_size DECIMAL(10, 2), monthly_rent DECIMAL(10, 2),
+#     monthly_rent_firm DECIMAL(10, 2), lessee_signed BOOLEAN, lessor_signed BOOLEAN, no_parking_spaces INT, rent_1 DECIMAL(10, 2), rent_2 DECIMAL(10, 2),
+#     rent_3 DECIMAL(10, 2) );
 
-{request}
+# {context}
+# {request}
 
-Generate response:
-"""
+# Generate response:
+# """
 
-PROMPT4 = PromptTemplate(input_variables=["request"], template=template4)
-
-# General Response Chain
-gnrl_chain = (PROMPT4
-              | llm
-              | StrOutputParser()       # to get output in a more usable format
-              )
-
-
-# Club SQL + Code generation chains
-sql_code_chain = sql_chain | code_chain
+template4 = """Use the following pieces of context to provide a 
+ concise answer to the question at the end. If you don't know the answer, 
+ just say that you don't know, don't try to make up an answer.
+ <context>
+ {context}
+ </context>
+ Question: {request}
+ Generate Response:
+ """
