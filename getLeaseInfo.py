@@ -150,15 +150,22 @@ def getLeaseInfo(request):
         if "need sql" in clf_label.lower():
             ## Generate code for insights
             code_response = sql_code_chain.invoke(request)
-            # print(code_response)
+            print(f"*********code_response:", code_response)
+
             ## Execute code
             output = repl_tool.run(code_response)
             # print(output)
         elif "non sql" in clf_label.lower():
             print(f"Called rag_chain")
-            # output =rag_chain.invoke(input={"query":request}, context=vectorstore_faiss)
-            output=rag_chain.invoke({"input":request})
-            # output=rag_chain.invoke({"input":{"context":vectorstore_faiss,"request": request}})
+            raw_output=rag_chain.invoke({"input":request})
+            # Accessing the page_content attribute of the Document object
+            page_content = raw_output["context"][0].page_content
+
+            # Creating a dictionary with the page_content
+            page_content_json = {"page_content": page_content }
+            output = json.dumps(page_content_json, indent=4)
+            print(output)
+            return output
         else:
             output = "The request is out of context."
         print(f"********output is: {output}")
@@ -168,7 +175,8 @@ def getLeaseInfo(request):
         traceback.print_exc() 
 
 if __name__== "__main__":
-    query ="What is the lease number of the lease?"
+    # query ="What are the main clauses of the lease?"
+    query= "How many unique leases are there?"
     getLeaseInfo(query)
 
 
