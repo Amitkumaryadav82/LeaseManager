@@ -77,5 +77,6 @@ template4= (
     "If you don't know the answer, say you don't know. "
     "Keep the answer concise and ensure that answer is not more than 250 words."
     "Ensure that answer is grammatically correct and it must not contains any incomplete sentences."
+    "If you are not sure which lease is being reffered in the question you should start the answer by saying 'Since no unique lease identifier is provided, answer is based on all the lease documents available:'"
     "Context: {context}"
 )
