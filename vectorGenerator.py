@@ -38,13 +38,10 @@ def get_documents_from_s3(s3_bucket, prefix):
             # Download the file from S3
             obj = s3.get_object(Bucket=bucket_name, Key=file_key)
             img_data = obj['Body'].read()
-
             # Open the image
             image = Image.open(BytesIO(img_data))
-
             # Perform OCR on the image
             text = pytesseract.image_to_string(image)
-
             # Append the extracted text to the list
             text_list.append(text)
 

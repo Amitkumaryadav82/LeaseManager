@@ -106,12 +106,19 @@ Generate suggestion:
 # Generate response:
 # """
 
-template4 = """Use the following pieces of context to provide a 
- concise answer to the question at the end. If you don't know the answer, 
- just say that you don't know, don't try to make up an answer.
- <context>
- {context}
- </context>
- Question: {request}
- Generate Response:
- """
+# template4 = """Use the following pieces of context to provide a 
+#  concise answer to the question at the end. If you don't know the answer, 
+#  just say that you don't know, don't try to make up an answer.
+#  <context>
+#  {context}
+#  </context>
+#  Question: {request}
+#  Generate Response:
+#  """
+
+template4= (
+    "Use the given context to answer the question. "
+    "If you don't know the answer, say you don't know. "
+    "Use three sentence maximum and keep the answer concise. "
+    "Context: {context}"
+)

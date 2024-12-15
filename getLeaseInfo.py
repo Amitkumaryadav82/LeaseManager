@@ -2,11 +2,16 @@ import json
 import os
 import boto3
 import tempfile
-
+import traceback
 
 ## LLm Models
 from langchain.prompts import PromptTemplate
-from langchain.chains import RetrievalQA
+from langchain_core.prompts import ChatPromptTemplate
+
+# from langchain.chains import RetrievalQA
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_community.llms import Bedrock
 from langchain_aws import BedrockEmbeddings
@@ -39,30 +44,6 @@ def get_mistral_llm():
         print("Exception getting Mistral: {e}")
 
 
-# prompt_template = """
-# Human: Use the following pieces of context to provide a 
-# concise answer to the question at the end. If you don't know the answer, 
-# just say that you don't know, don't try to make up an answer.
-# <context>
-# {context}
-# </context>
-# Question: {question}
-# Assistant:
-# """
-
-# PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
-
-# def get_response_llm(llm, vectorstore_faiss, query):
-#     qa = RetrievalQA.from_chain_type(
-#         llm=llm,
-#         chain_type="stuff",
-#         retriever=vectorstore_faiss.as_retriever(search_type="similarity", search_kwargs={"k": 3}),
-#         return_source_documents=True,
-#         chain_type_kwargs={"prompt": PROMPT}
-#     )
-#     answer = qa({"query": query})
-#     return answer['result']
-
 def read_faiss_s3(s3_key, bucket_name):
     print("************ inside read_faiss_s3")
     # List objects in the specified S3 bucket and prefix (subdirectory)
@@ -93,18 +74,6 @@ def read_faiss_s3(s3_key, bucket_name):
     return vectorstore_faiss
 
 vectorstore_faiss = read_faiss_s3("faiss/", "capleasemanager")
-
-# def getLeaseInfo(query):
-#     try:
-#         llm = get_mistral_llm()  # Create the LLaMA2 model instance
-#         s3_key = "faiss/"
-#         s3_bucket = "capleasemanager"
-#         vectorstore_faiss = read_faiss_s3(s3_key, s3_bucket)
-#         response = get_response_llm(llm, vectorstore_faiss, query)
-#         print("Response:", response)
-#         return response
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
 
 
 def initializePromptAndChains(request):
@@ -152,30 +121,30 @@ def initializePromptAndChains(request):
                     | StrOutputParser()       # to get output in a more usable format
                     )
         
-        PROMPT4 = PromptTemplate(input_variables=["context", "request"], template=template4)
-
+        # PROMPT4 = PromptTemplate(input_variables=["context", "request"], template=template4)
+        PROMPT4 =ChatPromptTemplate.from_messages(
+            [
+                ("system", template4),
+                ("human","{input}"),
+            ]
+        )
         # General Response Chain with FAISS Retriever
         retriever = vectorstore_faiss.as_retriever(search_type="similarity", search_kwargs={"k": 3})
-        gnrl_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=retriever,
-            return_source_documents=True,
-            chain_type_kwargs={"prompt": PROMPT4, "document_variable_name": "context"}
-        )
-
-        
+        question_answer_rag_chain=create_stuff_documents_chain(llm,PROMPT4)
+        rag_chain=create_retrieval_chain(retriever,question_answer_rag_chain)
+                
         # Club SQL + Code generation chains
         sql_code_chain = sql_chain | code_chain
         print("*************** initialized chains")
-        return clf_chain,sql_code_chain,gnrl_chain
+        return clf_chain,sql_code_chain,rag_chain
     except Exception as e:
         print(f"Exception while initalizing chains: {e}")
 
+#  Return the responses in json only
 def getLeaseInfo(request):
     try:
         
-        clf_chain,sql_code_chain,gnrl_chain= initializePromptAndChains(request)
+        clf_chain,sql_code_chain,rag_chain= initializePromptAndChains(request)
         clf_label=clf_chain.invoke(request)
         print(f" Received clf_label:  {clf_label}")
         if "need sql" in clf_label.lower():
@@ -186,17 +155,20 @@ def getLeaseInfo(request):
             output = repl_tool.run(code_response)
             # print(output)
         elif "non sql" in clf_label.lower():
-            print(f"Called gnrl_chain")
-            output = gnrl_chain.invoke({"request": request, "context": vectorstore_faiss})
+            print(f"Called rag_chain")
+            # output =rag_chain.invoke(input={"query":request}, context=vectorstore_faiss)
+            output=rag_chain.invoke({"input":request})
+            # output=rag_chain.invoke({"input":{"context":vectorstore_faiss,"request": request}})
         else:
             output = "The request is out of context."
         print(f"********output is: {output}")
         return output
     except Exception as e:
         print(f"Exception in getLease Info: {e}")
+        traceback.print_exc() 
 
 if __name__== "__main__":
-    query ="What are the main clauses of the lease?"
+    query ="What is the lease number of the lease?"
     getLeaseInfo(query)
 
 
@@ -247,3 +219,41 @@ if __name__== "__main__":
 #         return output
 #     except Exception as e:
 #         raise HTTPException (status_code=500,detail=str(e))
+
+
+# def getLeaseInfo(query):
+#     try:
+#         llm = get_mistral_llm()  # Create the LLaMA2 model instance
+#         s3_key = "faiss/"
+#         s3_bucket = "capleasemanager"
+#         vectorstore_faiss = read_faiss_s3(s3_key, s3_bucket)
+#         response = get_response_llm(llm, vectorstore_faiss, query)
+#         print("Response:", response)
+#         return response
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
+# prompt_template = """
+# Human: Use the following pieces of context to provide a 
+# concise answer to the question at the end. If you don't know the answer, 
+# just say that you don't know, don't try to make up an answer.
+# <context>
+# {context}
+# </context>
+# Question: {question}
+# Assistant:
+# """
+
+# PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
+
+# def get_response_llm(llm, vectorstore_faiss, query):
+#     qa = RetrievalQA.from_chain_type(
+#         llm=llm,
+#         chain_type="stuff",
+#         retriever=vectorstore_faiss.as_retriever(search_type="similarity", search_kwargs={"k": 3}),
+#         return_source_documents=True,
+#         chain_type_kwargs={"prompt": PROMPT}
+#     )
+#     answer = qa({"query": query})
+#     return answer['result']
