@@ -22,7 +22,7 @@ from langchain_core.tools import Tool
 
 # Vector Embedding And Vector Store
 from langchain_community.vectorstores import FAISS
-from promptsLibrary import template0,template1,template2,template3,template4
+from promptsLibrary import template0,template1,template2,template4
 
 ## Bedrock Clients
 bedrock = boto3.client(service_name="bedrock-runtime")
@@ -170,8 +170,8 @@ def getLeaseInfo(request):
         traceback.print_exc() 
 
 if __name__== "__main__":
-    # query ="What are the main clauses of the lease?"
-    query= "How many unique leases are there?"
+    query ="What are the main clauses of the lease?"
+    # query= "How many unique leases are there?"
     getLeaseInfo(query)
 
 

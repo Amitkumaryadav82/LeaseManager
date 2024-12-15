@@ -75,6 +75,7 @@ Generate code:
 template4= (
     "Use the given context to answer the question. "
     "If you don't know the answer, say you don't know. "
-    "Use three sentence maximum and keep the answer concise. "
+    "Keep the answer concise and ensure that answer is not more than 250 words."
+    "Ensure that answer is grammatically correct and it must not contains any incomplete sentences."
     "Context: {context}"
 )
