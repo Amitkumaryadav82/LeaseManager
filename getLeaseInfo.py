@@ -34,6 +34,17 @@ s3_key = "faiss/"
 s3_bucket = "capleasemanager"
 
 
+def initializeREPLTool():
+    ### Python tool for code execution
+        python_repl = PythonREPL()
+        repl = Tool(
+            name="python_repl",
+            description="A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`.",
+            func=python_repl.run,
+        )
+        repl.run("1+1")
+        return repl
+
 def get_mistral_llm():
     try:
         llm = Bedrock(model_id="mistral.mistral-7b-instruct-v0:2", 
@@ -96,15 +107,6 @@ def initializePromptAndChains(request):
                     | StrOutputParser()       # to get output in a more usable format
                     )
 
-        ### Python tool for code execution
-        python_repl = PythonREPL()
-        repl_tool = Tool(
-            name="python_repl",
-            description="A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`.",
-            func=python_repl.run,
-        )
-        repl_tool.run("1+1")
-
         PROMPT2 = PromptTemplate(input_variables=["request_plus_sqlquery"], template=template2)
 
         # Code Generation Chain
@@ -153,6 +155,8 @@ def getLeaseInfo(request):
             print(f"*********code_response:", code_response)
 
             ## Execute code
+            repl_tool=initializeREPLTool()
+            print("**********REPL Initialized")
             output = repl_tool.run(code_response)
             # print(output)
         elif "non sql" in clf_label.lower():
@@ -180,88 +184,3 @@ if __name__== "__main__":
     getLeaseInfo(query)
 
 
-
-
-# def getLeaseInfo(query):
-#     try:
-#         # for filename in os.listdir('figures'):
-#         # file_path = os.path.join('figures', filename)
-#         # if os.path.isfile(file_path) and filename != '__init__.py':
-#         #     os.remove(file_path)  # Remove file
-
-#          # Route the user request to necessary chain
-#         clf_label = clf_chain.invoke({"request":query})
-
-#         if "need sql" in clf_label.lower():
-#             ## Generate code for insights
-#             code_response = sql_code_chain.invoke({"request": query})
-#             # print(code_response)
-#             ## Execute code
-#             output = repl_tool.run(code_response)
-#             # print(output)
-#         elif "non sql" in clf_label.lower():
-#             output = gnrl_chain.invoke({"request": query})
-#         else:
-#             output = "The request is out of context."
-
-#         # Generate suggestions
-#         # TODO: Do we need it?
-#         # suggest = sug_chain.invoke({"request": query})
-        
-#         # If image is present inside 'figures' directory then Send the plot image to the chat
-#         # if len(os.listdir('figures')) > 1:
-#         #     for imgfile in os.listdir('figures'): 
-#         #         print(imgfile)
-#         #         if os.path.isfile(os.path.join('figures', imgfile)) and imgfile != '__init__.py':
-#         #             # Attach the image to the message and send response, image, and suggestions
-#         #             image = cl.Image(path="./figures/"+imgfile, name="image1", size="large", display="inline")
-#         #             await cl.Message(
-#         #                 content=f"Response: \n{output}", 
-#         #                 elements=[image]
-#         #                 ).send()
-#         #             await cl.Message(content=f"Further suggestions: \n{suggest}",).send()
-#         # else:
-#         #     # Send response and suggestions
-#         #     await cl.Message(content=f"Response: \n{output}",).send()
-#         #     await cl.Message(content=f"Further suggestions: \n{suggest}",).send()
-#         return output
-#     except Exception as e:
-#         raise HTTPException (status_code=500,detail=str(e))
-
-
-# def getLeaseInfo(query):
-#     try:
-#         llm = get_mistral_llm()  # Create the LLaMA2 model instance
-#         s3_key = "faiss/"
-#         s3_bucket = "capleasemanager"
-#         vectorstore_faiss = read_faiss_s3(s3_key, s3_bucket)
-#         response = get_response_llm(llm, vectorstore_faiss, query)
-#         print("Response:", response)
-#         return response
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-
-# prompt_template = """
-# Human: Use the following pieces of context to provide a 
-# concise answer to the question at the end. If you don't know the answer, 
-# just say that you don't know, don't try to make up an answer.
-# <context>
-# {context}
-# </context>
-# Question: {question}
-# Assistant:
-# """
-
-# PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
-
-# def get_response_llm(llm, vectorstore_faiss, query):
-#     qa = RetrievalQA.from_chain_type(
-#         llm=llm,
-#         chain_type="stuff",
-#         retriever=vectorstore_faiss.as_retriever(search_type="similarity", search_kwargs={"k": 3}),
-#         return_source_documents=True,
-#         chain_type_kwargs={"prompt": PROMPT}
-#     )
-#     answer = qa({"query": query})
-#     return answer['result']

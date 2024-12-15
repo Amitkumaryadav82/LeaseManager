@@ -5,7 +5,7 @@ If the user query requires some data to be fetched from the database tables then
 If the user query does not requires any data to be fetched from the database but instead need information on what type of data is present inside the database tables then classify it as `Non SQL`.
 If the user query looks out of the context then classify it as `Other`.
 
-Some examples of questions which should result in 'Need SQL' are mentioned below:
+Some examples of questions which should result in 'Need SQL' are mentioned below along with the sample query which should be generated:
     Question1- How many unique lease are there?
     Query1 - select unique(lease_name) from lease_details
     Question2- Give me all the leases which are completing in 2025.
