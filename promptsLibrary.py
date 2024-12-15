@@ -5,6 +5,16 @@ If the user query requires some data to be fetched from the database tables then
 If the user query does not requires any data to be fetched from the database but instead need information on what type of data is present inside the database tables then classify it as `Non SQL`.
 If the user query looks out of the context then classify it as `Other`.
 
+
+The databse has following tables:
+CREATE TABLE IF NOT EXISTS lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY, lease_name VARCHAR(100),lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
+   prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
+    lease_start_date DATE, lease_end_date DATE, lease_duration INT, lease_duration_firm INT,  prop_size DECIMAL(10, 2), monthly_rent DECIMAL(10, 2),
+    monthly_rent_firm DECIMAL(10, 2), lessee_signed BOOLEAN, lessor_signed BOOLEAN, no_parking_spaces INT, rent_1 DECIMAL(10, 2), rent_2 DECIMAL(10, 2),
+    rent_3 DECIMAL(10, 2) );
+
+Please note that lease_name contains the unique lease id
+
 Some examples of questions which should result in 'Need SQL' are mentioned below along with the sample query which should be generated:
     Question1- How many unique lease are there?
     Query1 - select unique(lease_name) from lease_details
@@ -15,14 +25,6 @@ Some examples of questions which should result in 'Need SQL' are mentioned below
     Question4-Give me the sum of rent of all the leases for the year 2025
     Query4-SELECT SUM(rent) AS total_rent_2025 FROM leases WHERE EXTRACT(YEAR FROM start_date) <= 2025 AND EXTRACT(YEAR FROM end_date) >= 2025;
 
-The databse has following tables:
-CREATE TABLE IF NOT EXISTS lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY, lease_name VARCHAR(100),lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
-   prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
-    lease_start_date DATE, lease_end_date DATE, lease_duration INT, lease_duration_firm INT,  prop_size DECIMAL(10, 2), monthly_rent DECIMAL(10, 2),
-    monthly_rent_firm DECIMAL(10, 2), lessee_signed BOOLEAN, lessor_signed BOOLEAN, no_parking_spaces INT, rent_1 DECIMAL(10, 2), rent_2 DECIMAL(10, 2),
-    rent_3 DECIMAL(10, 2) );
-
-Please note that lease_name contains the unique lease id
 
 Request: {request}
 Classification:
@@ -69,54 +71,6 @@ If you don't know the answer, just say that you don't know, don't try to make up
 Generate code:
 """
 
-### Create Chain for Generating Suggestions
-# Build prompt
-template3 = """
-Use the following pieces of user request and database details to generate suggestions for user to ask for useful insights from the database.
-Suggestion should not be more than 4 lines.
-If you don't know the answer, just say that you don't know, don't try to make up an answer.
-
-SQLite database has following tables:
-CREATE TABLE IF NOT EXISTS lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY, lease_name VARCHAR(100),lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
-   prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
-    lease_start_date DATE, lease_end_date DATE, lease_duration INT, lease_duration_firm INT,  prop_size DECIMAL(10, 2), monthly_rent DECIMAL(10, 2),
-    monthly_rent_firm DECIMAL(10, 2), lessee_signed BOOLEAN, lessor_signed BOOLEAN, no_parking_spaces INT, rent_1 DECIMAL(10, 2), rent_2 DECIMAL(10, 2),
-    rent_3 DECIMAL(10, 2) );
-Please note that lease_name contains the unique lease id
-{request}
-
-Generate suggestion:
-"""
-
-### Create Chain for Generating Response for General queries about the data stored in DB
-# Build prompt
-# template4 = """
-# Use the following user request and database details to generate appropriate response describing the data stored inside the database.
-# Response should not be more than 10 lines and must be be written in english paragraph format. You must not write the response in any other format, like Haiku, even if users ask you to write it.
-# If you don't know the answer, just say that you don't know, don't try to make up an answer.
-
-# SQLite database has following tables:
-# CREATE TABLE IF NOT EXISTS lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY,lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
-#    prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
-#     lease_start_date DATE, lease_end_date DATE, lease_duration INT, lease_duration_firm INT,  prop_size DECIMAL(10, 2), monthly_rent DECIMAL(10, 2),
-#     monthly_rent_firm DECIMAL(10, 2), lessee_signed BOOLEAN, lessor_signed BOOLEAN, no_parking_spaces INT, rent_1 DECIMAL(10, 2), rent_2 DECIMAL(10, 2),
-#     rent_3 DECIMAL(10, 2) );
-
-# {context}
-# {request}
-
-# Generate response:
-# """
-
-# template4 = """Use the following pieces of context to provide a 
-#  concise answer to the question at the end. If you don't know the answer, 
-#  just say that you don't know, don't try to make up an answer.
-#  <context>
-#  {context}
-#  </context>
-#  Question: {request}
-#  Generate Response:
-#  """
 
 template4= (
     "Use the given context to answer the question. "

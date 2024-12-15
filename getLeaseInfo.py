@@ -115,15 +115,6 @@ def initializePromptAndChains(request):
                     | StrOutputParser()       # to get output in a more usable format
                     )
         
-        PROMPT3 = PromptTemplate(input_variables=["request"], template=template3)
-
-        # Suggestion Generation Chain
-        sug_chain = (PROMPT3
-                    | llm
-                    | StrOutputParser()       # to get output in a more usable format
-                    )
-        
-        # PROMPT4 = PromptTemplate(input_variables=["context", "request"], template=template4)
         PROMPT4 =ChatPromptTemplate.from_messages(
             [
                 ("system", template4),
