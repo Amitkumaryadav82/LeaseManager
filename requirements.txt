@@ -9,5 +9,7 @@ langchain-community
 pillow
 faiss-cpu
 langchain_experimental
+pip install -U langchain-aws
+
 
 
