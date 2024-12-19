@@ -8,10 +8,10 @@ phases:
       - pip install -r requirements.txt
   build:
     commands:
-      - docker build -t vector-generator-api .
-      - docker tag vector-generator-api:latest <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/vector-generator-api:latest
+      - docker build -t leasemanager .
+      - docker tag leasemanager:latest <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/leasemanager:latest
       - $(aws ecr get-login --no-include-email --region <your-region>)
-      - docker push <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/vector-generator-api:latest
+      - docker push <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/leasemanager:latest
 artifacts:
   files:
     - '**/*'
