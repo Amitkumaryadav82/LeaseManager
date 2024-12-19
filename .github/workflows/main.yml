@@ -24,6 +24,6 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: |
-          docker build -t vector-generator-api .
-          docker tag vector-generator-api:latest $DOCKERHUB_USERNAME/vector-generator-api:latest
-          docker push $DOCKERHUB_USERNAME/vector-generator-api:latest
+          docker build -t leasemanager .
+          docker tag leasemanager:latest $DOCKERHUB_USERNAME/leasemanager:latest
+          docker push $DOCKERHUB_USERNAME/leasemanager:latest
