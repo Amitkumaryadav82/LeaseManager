@@ -22,5 +22,4 @@ EXPOSE 8000
 # Define environment variable
 ENV NAME World
 
-# Run vectorGenerator.py when the container launches
 CMD ["uvicorn", "getleaseAPI:app", "--host", "0.0.0.0", "--port", "8000"]
