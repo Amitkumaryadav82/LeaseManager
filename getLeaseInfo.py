@@ -198,8 +198,8 @@ def getLeaseInfo(request):
 
 
 if __name__== "__main__":
-    # query ="What is the capital of france?"
-    query= "How are the important terms in the lease?"
+    query ="What is the capital of france?"
+    # query= "How are the important terms in the lease?"
     output_from_llm =getLeaseInfo(query)
     print("****** final out put is: ",output_from_llm)
 
