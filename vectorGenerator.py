@@ -27,7 +27,7 @@ bedrock_embeddings=BedrockEmbeddings(model_id="amazon.titan-embed-text-v1",clien
 #Get the documents
 def get_documents_from_s3(s3_bucket, prefix):
     # @TODO  test with S3
-    s3=boto3.client("s3")
+    s3=boto3.client("s3",region_name="us-east-1")
     response = s3.list_objects_v2(Bucket=bucket_name)
     files = response.get('Contents', [])
 
@@ -82,7 +82,7 @@ def generate_faiss(split_docs):
 # Save the generated FAISS vectors in S3
 
 def save_faiss_s3(faiss_index):
-    s3 = boto3.client('s3')
+    s3 = boto3.client('s3',region_name="us-east-1")
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     directory = f'/tmp/faiss_index_{timestamp}'  # Use a unique directory name with timestamp
 
