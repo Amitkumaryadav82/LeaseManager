@@ -24,15 +24,25 @@ from langchain_core.tools import Tool
 from langchain_community.vectorstores import FAISS
 from promptsLibrary import template0,template1,template2,template4
 
-## Bedrock Clients
-bedrock = boto3.client(service_name="bedrock-runtime")
-bedrock_embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1", client=bedrock)
+settings = {}
+with open('settings.txt', 'r') as file:
+    for line in file:
+        if line.strip():  # Ignore empty lines
+            key, value = line.strip().split('=')
+            settings[key] = value
 
-# S3 client
-s3 = boto3.client("s3")
+print(settings)
+
 s3_key = "faiss/"
 s3_bucket = "capleasemanager"
 
+
+## Bedrock Clients
+bedrock = boto3.client(service_name="bedrock-runtime")
+bedrock_embeddings = BedrockEmbeddings(model_id=settings[embedding_model], client=bedrock)
+
+# S3 client
+s3 = boto3.client("s3")
 
 def initializeREPLTool():
     ### Python tool for code execution
@@ -47,7 +57,7 @@ def initializeREPLTool():
 
 def get_mistral_llm():
     try:
-        llm = Bedrock(model_id="mistral.mistral-7b-instruct-v0:2", 
+        llm = Bedrock(model_id= settings[llm_model], 
                 client=bedrock, model_kwargs={'max_tokens': 200})
         print("*****got mistral LLM")
         return llm
