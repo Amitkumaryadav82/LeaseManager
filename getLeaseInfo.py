@@ -39,7 +39,7 @@ s3_bucket = "capleasemanager"
 
 ## Bedrock Clients
 bedrock = boto3.client(service_name="bedrock-runtime")
-bedrock_embeddings = BedrockEmbeddings(model_id=settings[embedding_model], client=bedrock)
+bedrock_embeddings = BedrockEmbeddings(model_id=settings.get('embedding_model'), client=bedrock)
 
 # S3 client
 s3 = boto3.client("s3")
@@ -57,8 +57,17 @@ def initializeREPLTool():
 
 def get_mistral_llm():
     try:
-        llm = Bedrock(model_id= settings[llm_model], 
+        llm = Bedrock(model_id= settings.get('mistral_model'), 
                 client=bedrock, model_kwargs={'max_tokens': 200})
+        print("*****got mistral LLM")
+        return llm
+    except Exception as e:
+        print("Exception getting Mistral: {e}")
+
+def get_llama_llm():
+    try:
+        llm = Bedrock(model_id= settings.get('llama_model'), 
+                client=bedrock, model_kwargs={'max_gen_len': 512})
         print("*****got mistral LLM")
         return llm
     except Exception as e:
@@ -99,8 +108,9 @@ vectorstore_faiss = read_faiss_s3("faiss/", "capleasemanager")
 
 def initializePromptAndChains(request):
     try:
-        llm= get_mistral_llm()
-        print("********received LLM")
+        # llm= get_mistral_llm()
+        llm=get_llama_llm()
+        print("********received llamaLLM")
         PROMPT0 = PromptTemplate(input_variables=["request"], template=template0)
         print("********** received prompt0 ")
         # Classification Chain

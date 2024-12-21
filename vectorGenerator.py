@@ -29,7 +29,7 @@ bucket_name = 'capleasemanager'
 prefix = 'lease/'
 s3_faiss='faiss/'
 bedrock=boto3.client(service_name="bedrock-runtime")
-bedrock_embeddings=BedrockEmbeddings(model_id=setting[embedding_model],client=bedrock)
+bedrock_embeddings=BedrockEmbeddings(model_id=setting.get('embedding_model'),client=bedrock)
 # app=FastAPI()
 
 #Get the documents
