@@ -29,7 +29,7 @@ bedrock = boto3.client(service_name="bedrock-runtime")
 bedrock_embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1", client=bedrock)
 
 # S3 client
-s3 = boto3.client("s3",region_name="us-east-1")
+s3 = boto3.client("s3")
 s3_key = "faiss/"
 s3_bucket = "capleasemanager"
 
