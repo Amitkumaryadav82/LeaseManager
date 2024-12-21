@@ -3,7 +3,6 @@ from fastapi import FastAPI, HTTPException
 from getLeaseInfo import getLeaseInfo
 from vectorGenerator import generate_vectors
 
-
 app=FastAPI()
 
 @app.post("/getLeaseInfo")

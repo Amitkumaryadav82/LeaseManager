@@ -1,31 +1,10 @@
 
 template0 = """
+This system is strictly build to provide information about the leases.
 Given the user query below, classify it as either being about `Need SQL`, `Non SQL`, or `Other`.
 If the user query requires some data to be fetched from the database tables then classify it as `Need SQL`.
-If the user query does not requires any data to be fetched from the database but instead need information on what type of data is present inside the database tables then classify it as `Non SQL`.
+If the user query does not requires any data to be fetched from the database but instead need information on what type of data is present inside the documents which are related with leases then classify it as `Non SQL`.
 If the user query looks out of the context then classify it as `Other`.
-
-
-The databse has following tables:
-CREATE TABLE IF NOT EXISTS lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY, lease_name VARCHAR(100),lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
-   prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
-    lease_start_date DATE, lease_end_date DATE, lease_duration INT, lease_duration_firm INT,  prop_size DECIMAL(10, 2), monthly_rent DECIMAL(10, 2),
-    monthly_rent_firm DECIMAL(10, 2), lessee_signed BOOLEAN, lessor_signed BOOLEAN, no_parking_spaces INT, rent_1 DECIMAL(10, 2), rent_2 DECIMAL(10, 2),
-    rent_3 DECIMAL(10, 2) );
-
-Please note that lease_name contains the unique lease id
-
-Some examples of questions which should result in 'Need SQL' are mentioned below along with the sample query which should be generated:
-    Question1- How many unique lease are there?
-    Query1 - select unique(lease_name) from lease_details
-    Question2- Give me all the leases which are completing in 2025.
-    Query2- Select lease_name from lease_details where EXTRACT(YEAR FROM lease_end_date) = 2025;
-    Question3- Give me all the leases which started in 2024 and ending in 2027.
-    Query3- SELECT * FROM leases WHERE EXTRACT(YEAR FROM start_date) = 2024  AND EXTRACT(YEAR FROM end_date) = 2027;
-    Question4-Give me the sum of rent of all the leases for the year 2025
-    Query4-SELECT SUM(rent) AS total_rent_2025 FROM leases WHERE EXTRACT(YEAR FROM start_date) <= 2025 AND EXTRACT(YEAR FROM end_date) >= 2025;
-
-
 Request: {request}
 Classification:
 """

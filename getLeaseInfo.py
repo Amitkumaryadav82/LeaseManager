@@ -67,8 +67,8 @@ def get_mistral_llm():
 def get_llama_llm():
     try:
         llm = Bedrock(model_id= settings.get('llama_model'), 
-                client=bedrock, model_kwargs={'max_gen_len': 512})
-        print("*****got mistral LLM")
+                client=bedrock, model_kwargs={'max_gen_len': 512, 'top_p':0.1})
+        print("*****got Llama LLM")
         return llm
     except Exception as e:
         print("Exception getting Mistral: {e}")
@@ -153,45 +153,54 @@ def initializePromptAndChains(request):
     except Exception as e:
         print(f"Exception while initalizing chains: {e}")
 
+def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
+    if "need sql" in clf_label.lower():
+        print("***** inside need sql")
+        ## Generate code for insights
+        code_response = sql_code_chain.invoke(request)
+        print(f"*********code_response:", code_response)
+
+        ## Execute code
+        repl_tool=initializeREPLTool()
+        print("**********REPL Initialized")
+        output = repl_tool.run(code_response)
+        # print(output)
+    elif "non sql" in clf_label.lower():
+        print(f" inside non sql...Called rag_chain")
+        raw_output=rag_chain.invoke({"input":request})
+        # Accessing the page_content attribute of the Document object
+        page_content = raw_output["context"][0].page_content
+        # Creating a dictionary with the page_content
+        page_content_json = {"page_content": page_content }
+        output = json.dumps(page_content_json, indent=4)
+        print(output)
+        
+    else:
+        print("***** inside need sql")
+        output = "The request is out of context."
+        print(f"********output is: {output}")
+    return output
+
 #  Return the responses in json only
 def getLeaseInfo(request):
     try:
-        
+        print("**** the query is :", request)
         clf_chain,sql_code_chain,rag_chain= initializePromptAndChains(request)
         clf_label=clf_chain.invoke(request)
         print(f" Received clf_label:  {clf_label}")
-        if "need sql" in clf_label.lower():
-            ## Generate code for insights
-            code_response = sql_code_chain.invoke(request)
-            print(f"*********code_response:", code_response)
-
-            ## Execute code
-            repl_tool=initializeREPLTool()
-            print("**********REPL Initialized")
-            output = repl_tool.run(code_response)
-            # print(output)
-        elif "non sql" in clf_label.lower():
-            print(f"Called rag_chain")
-            raw_output=rag_chain.invoke({"input":request})
-            # Accessing the page_content attribute of the Document object
-            page_content = raw_output["context"][0].page_content
-
-            # Creating a dictionary with the page_content
-            page_content_json = {"page_content": page_content }
-            output = json.dumps(page_content_json, indent=4)
-            print(output)
-            return output
-        else:
-            output = "The request is out of context."
-        print(f"********output is: {output}")
-        return output
+        output=invoke_chain(request,clf_label, clf_chain,sql_code_chain,rag_chain)
+        output_json = {"response": output }
+        final_output = json.dumps(output_json, indent=4)
+        return final_output
     except Exception as e:
         print(f"Exception in getLease Info: {e}")
         traceback.print_exc() 
 
-# if __name__== "__main__":
-#     query ="What are the main clauses of the lease?"
-#     # query= "How many unique leases are there?"
-#     getLeaseInfo(query)
+
+if __name__== "__main__":
+    # query ="What is the capital of france?"
+    query= "How are the important terms in the lease?"
+    output_from_llm =getLeaseInfo(query)
+    print("****** final out put is: ",output_from_llm)
 
 
