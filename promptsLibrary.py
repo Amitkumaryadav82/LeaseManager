@@ -5,6 +5,8 @@ Given the user query below, classify it as either being about `Need SQL`, `Non S
 If the user query requires some data to be fetched from the database tables then classify it as `Need SQL`.
 If the user query does not requires any data to be fetched from the database but instead need information on what type of data is present inside the documents which are related with leases then classify it as `Non SQL`.
 If the user query looks out of the context then classify it as `Other`.
+Do not respond in more than 2 words.
+Do not generate any additional prompts
 Request: {request}
 Classification:
 """
