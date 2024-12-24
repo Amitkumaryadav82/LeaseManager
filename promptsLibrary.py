@@ -46,7 +46,8 @@ template2 = """
 Use the following pieces of user request and sql query to generate python code that should first load the required data from 'lease_details' table which is available in leasemanagedb database 
 and then show insights related to that data. If the generated insights contains a figure or plot then that should be saved inside the 'figures' directory.
 Generate and return python code only, no additional text.
-Python code should be well formatted and must not have any indentation or syntactical errors.
+Python code should be well formatted and must not have any indentation or syntactical errors. 
+Ensure all the brackets are closed properly in the python code.
 Information required to connect to the database like host, user, password and database name are mentioned in settings.txt file.
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
