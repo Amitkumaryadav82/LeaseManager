@@ -15,6 +15,6 @@ uvicorn
 langchain-aws
 pillow
 awscli
-
+python-multipart
 
 

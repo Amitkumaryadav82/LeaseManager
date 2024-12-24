@@ -117,3 +117,4 @@ def generate_vectors():
     splitted_text= data_splitter(list_text)
     vectorstore_faiss= generate_faiss(splitted_text)
     save_faiss_s3(vectorstore_faiss)
+
