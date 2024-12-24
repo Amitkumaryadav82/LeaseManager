@@ -200,7 +200,6 @@ def getLeaseInfo(request):
 
 
 if __name__== "__main__":
-    # Get the query from the user
     query = input("Please enter your query: ")
     output_from_llm = getLeaseInfo(query)
     print("****** final output is: ", output_from_llm)
