@@ -38,6 +38,17 @@ def closeConn(conn):
     conn.close()
 
 
+def runQuery(conn, query):
+    try:
+        conn=getConnection()
+        cursor=conn.cursor()
+        result=cursor.execute(query)
+        closeConn(conn)
+        return result
+
+    except pymysql.MySQLError as e:
+        print("Error while executing query: ",e)
+
 if __name__== "__main__":
     query ="select * from leasemanagerdb.lease_details;"
     # query= "How are the important terms in the lease?"

@@ -14,12 +14,14 @@ Classification:
 ### Create Chain for SQL Query Generation
 # Build prompt
 template1 = """
-You are a PostGresSQL expert. Given an input request, return a syntactically correct PostGresSQL query to run.
+You are a MySQL expert. Given an input request, return a syntactically correct MySQL query to run.
 Unless the user specifies in the question a specific number of examples to obtain, query for all the results. You can order the results to return the most informative data in the database.
 Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers.
 Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
 Pay attention to use date('now') function to get the current date, if the question involves "today".
 Do not return any new columns nor perform aggregation on columns. Return only the columns present in tables and further aggregations will be done by python code in later steps.
+Python code should be well formatted and must not have any indentation or syntactical errors.
+Information required to connect to the database like host, user, password and database name are mentioned in settings.txt file.
 
 Use the following format:
 
@@ -41,10 +43,11 @@ SQLQuery:
 # Build prompt
 template2 = """
 # update the table name
-Use the following pieces of user request and sql query to generate python code that should first load the required data from 'lease_details' database and 
-then show insights related to that data. If the generated insights contains a figure or plot then that should be saved inside the 'figures' directory.
-If there is some tables or numerical values as insights then those should be printed out explicitely using print statement along with their description.
+Use the following pieces of user request and sql query to generate python code that should first load the required data from 'lease_details' table which is available in leasemanagedb database 
+and then show insights related to that data. If the generated insights contains a figure or plot then that should be saved inside the 'figures' directory.
 Generate and return python code only, no additional text.
+Python code should be well formatted and must not have any indentation or syntactical errors.
+Information required to connect to the database like host, user, password and database name are mentioned in settings.txt file.
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
 {request_plus_sqlquery}
