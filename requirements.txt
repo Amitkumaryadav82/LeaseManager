@@ -12,6 +12,9 @@ langchain_experimental
 langchain-aws
 fastapi
 uvicorn
+langchain-aws
+pillow
+awscli
 
 
 
