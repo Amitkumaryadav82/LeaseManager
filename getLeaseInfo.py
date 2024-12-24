@@ -200,9 +200,8 @@ def getLeaseInfo(request):
 
 
 if __name__== "__main__":
-    query ="What is the capital of france?"
-    # query= "How are the important terms in the lease?"
-    output_from_llm =getLeaseInfo(query)
-    print("****** final out put is: ",output_from_llm)
-
+    # Get the query from the user
+    query = input("Please enter your query: ")
+    output_from_llm = getLeaseInfo(query)
+    print("****** final output is: ", output_from_llm)
 
