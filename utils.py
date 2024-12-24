@@ -24,16 +24,13 @@ def getConnection ():
             connect_timeout=5
         )
         print("Connection successful!")
-        
         # Create a cursor object
         cursor = conn.cursor()
-        
         # Execute a simple query
         cursor.execute("SELECT VERSION()")
         version = cursor.fetchone()
         print("Database version:", version)
-    
-    
+        return conn   
     except pymysql.MySQLError as e:
         print("Error connecting to the database:", e)
 
