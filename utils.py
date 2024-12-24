@@ -39,7 +39,7 @@ def closeConn(conn):
 
 
 if __name__== "__main__":
-    query ="select * from lease_details;"
+    query ="select * from leasemanagerdb.lease_details;"
     # query= "How are the important terms in the lease?"
     conn=getConnection()
     cursor=conn.cursor()
