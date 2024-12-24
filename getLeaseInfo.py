@@ -19,19 +19,21 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_experimental.utilities import PythonREPL
 from langchain_core.tools import Tool
 
-
 # Vector Embedding And Vector Store
 from langchain_community.vectorstores import FAISS
 from promptsLibrary import template0,template1,template2,template4
 
-settings = {}
-with open('settings.txt', 'r') as file:
-    for line in file:
-        if line.strip():  # Ignore empty lines
-            key, value = line.strip().split('=')
-            settings[key] = value
+from utils import getSettings
 
-print(settings)
+settings =getSettings()
+# settings = {}
+# with open('settings.txt', 'r') as file:
+#     for line in file:
+#         if line.strip():  # Ignore empty lines
+#             key, value = line.strip().split('=')
+#             settings[key] = value
+
+# print(settings)
 
 s3_key = "faiss/"
 s3_bucket = "capleasemanager"
