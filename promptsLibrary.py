@@ -2,11 +2,21 @@
 template0 = """
 This system is strictly build to provide information about the leases.
 Given the user query below, classify it as either being about `Need SQL`, `Non SQL`, or `Other`.
-If the user query requires some data to be fetched from the database tables then classify it as `Need SQL`.
+If the user query requires some data to be fetched from the database tables then classify it as `Need SQL`. You should classify the user query as "Need SQL" only if data is available in the table mentioned below.
+Note that able contains only quantitative data and not qualitative. 
 If the user query does not requires any data to be fetched from the database but instead need information on what type of data is present inside the documents which are related with leases then classify it as `Non SQL`.
 If the user query looks out of the context then classify it as `Other`.
 Do not respond in more than 2 words.
 Do not generate any additional prompts
+
+Table details are mentioned below:
+CREATE TABLE lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY, lease_name VARCHAR(100),lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
+   prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
+    lease_start_date DATE, lease_end_date DATE, lease_duration INT, lease_duration_firm INT,  prop_size DECIMAL(10, 2), monthly_rent DECIMAL(10, 2),
+    monthly_rent_firm DECIMAL(10, 2), lessee_signed BOOLEAN, lessor_signed BOOLEAN, no_parking_spaces INT, rent_1 DECIMAL(10, 2), rent_2 DECIMAL(10, 2),
+    rent_3 DECIMAL(10, 2) );
+
+
 Request: {request}
 Classification:
 """
@@ -57,11 +67,13 @@ Generate code:
 """
 
 
-template4= (
-    "Use the given context to answer the question. "
-    "If you don't know the answer, say you don't know. "
-    "Keep the answer concise and ensure that answer is not more than 250 words."
-    "Ensure that answer is grammatically correct and it must not contains any incomplete sentences."
-    "If you are not sure which lease is being reffered in the question you should start the answer by saying 'Since no unique lease identifier is provided, answer is based on all the lease documents available:'"
-    "Context: {context}"
-)
+template4= """
+    Use the given context and the request to answer the question.
+    If you don't know the answer, say you don't know.
+    Keep the answer concise and ensure that answer is not more than 250 words.
+    Ensure that answer is grammatically correct and it must not contains any incomplete sentences.
+    While providing response, do not copy the text from the lease document directly, instead provide a proper summary and then provide references based on which summary is generated.
+    
+    Request: {request}
+    Context: {context}
+    """
