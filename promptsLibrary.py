@@ -8,7 +8,7 @@ If the user query does not requires any data to be fetched from the database but
 If the user query looks out of the context then classify it as `Other`.
 Do not respond in more than 2 words.
 Do not generate any additional prompts
-
+If users ask you to check the details in the documents in the user query then classify it as "Non SQL"
 Table details are mentioned below:
 CREATE TABLE lease_details (document_id INT AUTO_INCREMENT PRIMARY KEY, lease_name VARCHAR(100),lease_date DATE,lessee_name VARCHAR(255),lessor_name VARCHAR(255),
    prop_address_line1 VARCHAR(255), prop_address_line2 VARCHAR(255), prop_city VARCHAR(100), prop_state VARCHAR(50), prop_zip_code VARCHAR(20),
@@ -73,7 +73,7 @@ template4= """
     Keep the answer concise and ensure that answer is not more than 250 words.
     Ensure that answer is grammatically correct and it must not contains any incomplete sentences.
     While providing response, do not copy the text from the lease document directly, instead provide a proper summary and then provide references based on which summary is generated.
-    
-    Request: {request}
+    Be specific in response. Do not provide any additional details unless required.   
+
     Context: {context}
     """
