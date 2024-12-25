@@ -44,7 +44,7 @@ def runQuery(query):
         conn=getConnection()
         cursor=conn.cursor()
         cursor.execute(query)
-        results = cursor.fetchall()
+        result = cursor.fetchall()
         cursor.close()
         closeConn(conn)
         return result
