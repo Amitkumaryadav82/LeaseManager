@@ -231,7 +231,7 @@ def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
         print(f"****** SQL Query is ", sql_query)
         query_output=runQuery(sql_query)
         print(f"****** SQL Query output is ", query_output)
-
+        
 
     elif "non sql" in clf_label.lower():
         print(f" inside non sql...Called rag_chain")

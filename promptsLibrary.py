@@ -15,7 +15,7 @@ Given the user query below, classify it as either `Need SQL`, `Non SQL`, or `Oth
 **Table Details:**
 
 CREATE TABLE leasemanagerdb.lease_details (
-    document_id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     lease_name VARCHAR(100),
     lease_date DATE,
     lessee_name VARCHAR(255),
@@ -71,7 +71,7 @@ SQLQuery: Generated SQL Query here
 
 Only use the following tables:
 CREATE TABLE IF NOT EXISTS leasemanagerdb.lease_details (
-    document_id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     lease_name VARCHAR(100),
     lease_date DATE,
     lessee_name VARCHAR(255),
