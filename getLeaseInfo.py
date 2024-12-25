@@ -171,6 +171,25 @@ def initializePromptAndChains(request):
 
 # Code response below will generate a string which will contain the SQL query. To execute the query
 # I am extracting sql query from the string
+# def extract_sql_query(response):
+#     # Split the response into lines
+#     lines = response.split('\n')
+#     sql_query_lines = []
+#     capture = False
+
+#     for line in lines:
+#         stripped_line = line.strip()
+#         if stripped_line.startswith('SELECT'):
+#             capture = True
+#         if capture:
+#             sql_query_lines.append(stripped_line)
+#         if stripped_line.endswith(';'):
+#             break
+
+#     # Join the captured lines to form the complete SQL query
+#     sql_query = ' '.join(sql_query_lines).strip()
+#     return sql_query
+
 def extract_sql_query(response):
     # Split the response into lines
     lines = response.split('\n')
@@ -179,8 +198,10 @@ def extract_sql_query(response):
 
     for line in lines:
         stripped_line = line.strip()
-        if stripped_line.startswith('SELECT'):
+        if stripped_line.startswith('SQLQuery:'):
             capture = True
+            # Start capturing from the next line
+            continue
         if capture:
             sql_query_lines.append(stripped_line)
         if stripped_line.endswith(';'):
@@ -189,7 +210,6 @@ def extract_sql_query(response):
     # Join the captured lines to form the complete SQL query
     sql_query = ' '.join(sql_query_lines).strip()
     return sql_query
-
 
 def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
     if "need sql" in clf_label.lower():
