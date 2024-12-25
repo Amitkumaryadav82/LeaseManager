@@ -123,9 +123,11 @@ def save_faiss_s3(faiss_index):
 
 
 def generate_vectors():
+    log.Info("Starting to generate Vectors")
     list_text = get_documents_from_s3(bucket_name,prefix)
     # list_text=read_text_from_files(raw_png)
     splitted_text= data_splitter(list_text)
     vectorstore_faiss= generate_faiss(splitted_text)
     save_faiss_s3(vectorstore_faiss)
+    log.Info("Finished Generating Vectors")
 
