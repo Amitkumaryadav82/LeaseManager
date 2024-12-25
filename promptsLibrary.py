@@ -14,7 +14,7 @@ Given the user query below, classify it as either `Need SQL`, `Non SQL`, or `Oth
 
 **Table Details:**
 
-CREATE TABLE lease_details (
+CREATE TABLE leasemanagerdb.lease_details (
     document_id INT AUTO_INCREMENT PRIMARY KEY,
     lease_name VARCHAR(100),
     lease_date DATE,
@@ -64,7 +64,7 @@ Request: Request here
 SQLQuery: Generated SQL Query here
 
 Only use the following tables:
-CREATE TABLE IF NOT EXISTS lease_details (
+CREATE TABLE IF NOT EXISTS leasemanagerdb.lease_details (
     document_id INT AUTO_INCREMENT PRIMARY KEY,
     lease_name VARCHAR(100),
     lease_date DATE,
