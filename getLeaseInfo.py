@@ -124,7 +124,7 @@ def initializePromptAndChains(request):
         # llm= get_mistral_llm()
         # llm=get_llama_llm()
         llm=get_anthropic_llm()
-        print("********received llamaLLM")
+        print("********received anthropic model")
         PROMPT0 = PromptTemplate(input_variables=["request"], template=template0)
         print("********** received prompt0 ")
         # Classification Chain
@@ -149,7 +149,8 @@ def initializePromptAndChains(request):
         #             | llm
         #             | StrOutputParser()       # to get output in a more usable format
         #             )
-        
+        print("********** SQL ChainSet ")
+
         PROMPT4 =ChatPromptTemplate.from_messages(
             [
                 ("system", template4),
@@ -169,47 +170,6 @@ def initializePromptAndChains(request):
     except Exception as e:
         print(f"Exception while initalizing chains: {e}")
 
-# Code response below will generate a string which will contain the SQL query. To execute the query
-# I am extracting sql query from the string
-# def extract_sql_query(response):
-#     # Split the response into lines
-#     lines = response.split('\n')
-#     sql_query_lines = []
-#     capture = False
-
-#     for line in lines:
-#         stripped_line = line.strip()
-#         if stripped_line.startswith('SELECT'):
-#             capture = True
-#         if capture:
-#             sql_query_lines.append(stripped_line)
-#         if stripped_line.endswith(';'):
-#             break
-
-#     # Join the captured lines to form the complete SQL query
-#     sql_query = ' '.join(sql_query_lines).strip()
-#     return sql_query
-
-# def extract_sql_query(response):
-#     # Split the response into lines
-#     lines = response.split('\n')
-#     sql_query_lines = []
-#     capture = False
-
-#     for line in lines:
-#         stripped_line = line.strip()
-#         if stripped_line.startswith('SQLQuery:'):
-#             capture = True
-#             # Start capturing from the next line
-#             continue
-#         if capture:
-#             sql_query_lines.append(stripped_line)
-#         if stripped_line.endswith(';'):
-#             break
-
-#     # Join the captured lines to form the complete SQL query
-#     sql_query = ' '.join(sql_query_lines).strip()
-#     return sql_query
 
 def extract_sql_query(response):
     # Split the response by 'SQLQuery:'
