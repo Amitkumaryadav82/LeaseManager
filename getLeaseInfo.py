@@ -23,9 +23,10 @@ from langchain_core.tools import Tool
 
 # Vector Embedding And Vector Store
 from langchain_community.vectorstores import FAISS
-from promptsLibrary import template0,template1,template2,template4
+# from promptsLibrary import template0,template1,template2,template4
+from promptsLibrary import template0,template1,template4
 
-from utils import getSettings
+from utils import getSettings, runQuery
 
 settings =getSettings()
 # settings = {}
@@ -132,6 +133,7 @@ def initializePromptAndChains(request):
                     | StrOutputParser()       # to get output in a more usable format
                     )
         print(f"********** received clfchain ")
+        
         PROMPT1 = PromptTemplate(input_variables=["request"], template=template1)
         print("********** received prompt1 ")
         # SQL Query Generation Chain
@@ -140,13 +142,13 @@ def initializePromptAndChains(request):
                     | StrOutputParser()       # to get output in a more usable format
                     )
 
-        PROMPT2 = PromptTemplate(input_variables=["request_plus_sqlquery"], template=template2)
+        # PROMPT2 = PromptTemplate(input_variables=["request_plus_sqlquery"], template=template2)
 
-        # Code Generation Chain
-        code_chain = (PROMPT2
-                    | llm
-                    | StrOutputParser()       # to get output in a more usable format
-                    )
+        # # Code Generation Chain
+        # code_chain = (PROMPT2
+        #             | llm
+        #             | StrOutputParser()       # to get output in a more usable format
+        #             )
         
         PROMPT4 =ChatPromptTemplate.from_messages(
             [
@@ -160,11 +162,34 @@ def initializePromptAndChains(request):
         rag_chain=create_retrieval_chain(retriever,question_answer_rag_chain)
                 
         # Club SQL + Code generation chains
-        sql_code_chain = sql_chain | code_chain
+        # sql_code_chain = sql_chain | code_chain
+        sql_code_chain = sql_chain
         print("*************** initialized chains")
         return clf_chain,sql_code_chain,rag_chain
     except Exception as e:
         print(f"Exception while initalizing chains: {e}")
+
+# Code response below will generate a string which will contain the SQL query. To execute the query
+# I am extracting sql query from the string
+def extract_sql_query(response):
+    # Split the response into lines
+    lines = response.split('\n')
+    sql_query_lines = []
+    capture = False
+
+    for line in lines:
+        stripped_line = line.strip()
+        if stripped_line.startswith('SELECT'):
+            capture = True
+        if capture:
+            sql_query_lines.append(stripped_line)
+        if stripped_line.endswith(';'):
+            break
+
+    # Join the captured lines to form the complete SQL query
+    sql_query = ' '.join(sql_query_lines).strip()
+    return sql_query
+
 
 def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
     if "need sql" in clf_label.lower():
@@ -172,12 +197,12 @@ def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
         ## Generate code for insights
         code_response = sql_code_chain.invoke(request)
         print(f"*********code_response:", code_response)
+        sql_query=extract_sql_query(code_response)
+        print(f"****** SQL Query is ", sql_query)
+        query_output=runQuery(sql_query)
+        print(f"****** SQL Query output is ", query_output)
 
-        ## Execute code
-        repl_tool=initializeREPLTool()
-        print("**********REPL Initialized")
-        output = repl_tool.run(code_response)
-        # print(output)
+
     elif "non sql" in clf_label.lower():
         print(f" inside non sql...Called rag_chain")
         raw_output=rag_chain.invoke({"input":request})

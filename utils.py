@@ -38,8 +38,9 @@ def closeConn(conn):
     conn.close()
 
 
-def runQuery(conn, query):
+def runQuery(query):
     try:
+        conn=getConnection()
         conn=getConnection()
         cursor=conn.cursor()
         result=cursor.execute(query)

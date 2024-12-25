@@ -1,4 +1,0 @@
-import pymysql
-
-
-def connectDB ():
