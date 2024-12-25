@@ -59,9 +59,7 @@ You are a MySQL expert. Given an input request, return a syntactically correct M
 - Database Connection Info: Information required to connect to the database like host, user, password, and database name are mentioned in settings.txt file.
 - Query Format: The query should be generated in a single line.
 
-Use the following format:
-
-Request: Request here
+Answer in the following format only:
 SQLQuery: Generated SQL Query here
 
 Only use the following tables:
