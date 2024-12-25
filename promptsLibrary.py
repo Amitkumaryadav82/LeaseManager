@@ -91,6 +91,11 @@ CREATE TABLE IF NOT EXISTS leasemanagerdb.lease_details (
 
 Please note that lease_name contains the unique lease id.
 
+Examples of valid queries:
+Select count(lease_name) from leasemanagedb.lease_details;
+Select * from leasemanagedb.lease_details;
+Select * from leasemanagerdb.lease_details where prop_city ="Tuscon";
+
 Request: {request}
 SQLQuery: 
 """
