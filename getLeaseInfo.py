@@ -190,27 +190,36 @@ def initializePromptAndChains(request):
 #     sql_query = ' '.join(sql_query_lines).strip()
 #     return sql_query
 
+# def extract_sql_query(response):
+#     # Split the response into lines
+#     lines = response.split('\n')
+#     sql_query_lines = []
+#     capture = False
+
+#     for line in lines:
+#         stripped_line = line.strip()
+#         if stripped_line.startswith('SQLQuery:'):
+#             capture = True
+#             # Start capturing from the next line
+#             continue
+#         if capture:
+#             sql_query_lines.append(stripped_line)
+#         if stripped_line.endswith(';'):
+#             break
+
+#     # Join the captured lines to form the complete SQL query
+#     sql_query = ' '.join(sql_query_lines).strip()
+#     return sql_query
+
 def extract_sql_query(response):
-    # Split the response into lines
-    lines = response.split('\n')
-    sql_query_lines = []
-    capture = False
-
-    for line in lines:
-        stripped_line = line.strip()
-        if stripped_line.startswith('SQLQuery:'):
-            capture = True
-            # Start capturing from the next line
-            continue
-        if capture:
-            sql_query_lines.append(stripped_line)
-        if stripped_line.endswith(';'):
-            break
-
-    # Join the captured lines to form the complete SQL query
-    sql_query = ' '.join(sql_query_lines).strip()
-    return sql_query
-
+    # Split the response by 'SQLQuery:'
+    parts = response.split('SQLQuery:')
+    if len(parts) > 1:
+        # The SQL query is the part after 'SQLQuery:'
+        sql_query = parts[1].strip()
+        return sql_query
+    else:
+        return None
 
 def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
     if "need sql" in clf_label.lower():
