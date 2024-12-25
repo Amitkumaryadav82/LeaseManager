@@ -15,6 +15,9 @@ from langchain_community.embeddings import BedrockEmbeddings
 import datetime
 from fastapi import FastAPI, HTTPException
 import uvicorn
+from logger import getLogger
+
+log=getLogger()
 
 setting = {}
 with open('settings.txt', 'r') as file:
@@ -34,7 +37,8 @@ bedrock_embeddings=BedrockEmbeddings(model_id=setting.get('embedding_model'),cli
 
 #Get the documents
 def get_documents_from_s3(s3_bucket, prefix):
-    
+    log.Info("Starting to retrive documents from S3 successfully")
+
     s3=boto3.client("s3")
     response = s3.list_objects_v2(Bucket=bucket_name)
     files = response.get('Contents', [])
@@ -52,11 +56,12 @@ def get_documents_from_s3(s3_bucket, prefix):
             text = pytesseract.image_to_string(image)
             # Append the extracted text to the list
             text_list.append(text)
-
+    log.Info("Completed retriving documents from S3 successfully")
     return text_list
 
 # read the texts from the documents
 def read_text_from_files(pngfiles):
+    log.Info("Starting to read text from files")
     text_list = []
     folder_path = 'testdata/'
     for filename in os.listdir(folder_path):
@@ -65,10 +70,13 @@ def read_text_from_files(pngfiles):
             img = Image.open(img_path)
             text = pytesseract.image_to_string(img)
             text_list.append(text)
+    log.Info("Successfully read text from files")
     return text_list
 
 ## This function will read the data and  split the documents into chunk
 def data_splitter(documents):
+    log.Info("Starting to split documents")
+
     text_splitter=RecursiveCharacterTextSplitter(chunk_size=10000,
                                                  chunk_overlap=1000)
     split_texts=[]
@@ -76,20 +84,24 @@ def data_splitter(documents):
 
         chunk=text_splitter.split_text(doc)
         split_texts.extend(chunk)
+    log.Info("Completed split documents")
     return split_texts
 
    # Generate the FAISS vectors from the documents
 def generate_faiss(split_docs):
+    log.Info("Starting to generate fiass")
     documents = [Document(page_content=text) for text in split_docs]
     vectorstore_faiss = FAISS.from_documents(
         documents,
         bedrock_embeddings  
     )
+    log.Info("Completed:generate fiass")
     return vectorstore_faiss
 
 # Save the generated FAISS vectors in S3
 
 def save_faiss_s3(faiss_index):
+    log.Info("Starting to save fiass in s3")
     s3 = boto3.client('s3')
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     directory = f'/tmp/faiss_index_{timestamp}'  # Use a unique directory name with timestamp
@@ -107,12 +119,11 @@ def save_faiss_s3(faiss_index):
         with open(file_path, 'rb') as f:
             s3.put_object(Bucket=bucket_name, Key=s3_faiss + file, Body=f.read())
 
-    print(f"FAISS index saved to S3 from directory {directory}")
+    log.info("FAISS index saved to S3 from directory {directory}")
 
 
 def generate_vectors():
     list_text = get_documents_from_s3(bucket_name,prefix)
-    
     # list_text=read_text_from_files(raw_png)
     splitted_text= data_splitter(list_text)
     vectorstore_faiss= generate_faiss(splitted_text)
