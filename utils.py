@@ -56,4 +56,4 @@ if __name__== "__main__":
     conn=getConnection()
     cursor=conn.cursor()
     cursor.execute(query);
-    print("****** from db: ",cursor.result())
+    print("****** from db: ",cursor.fetched())
