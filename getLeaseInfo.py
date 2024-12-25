@@ -211,6 +211,7 @@ def extract_sql_query(response):
     sql_query = ' '.join(sql_query_lines).strip()
     return sql_query
 
+
 def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
     if "need sql" in clf_label.lower():
         print("***** inside need sql")
