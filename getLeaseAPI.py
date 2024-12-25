@@ -32,7 +32,7 @@ def generate_vectors_endpoint():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/upload/")
+@app.post("/uploadFilesToS3/")
 def upload_files(files: List[UploadFile] = File(...)):
     for file in files:
         try:
