@@ -231,7 +231,11 @@ def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
         print(f"****** SQL Query is ", sql_query)
         query_output=runQuery(sql_query)
         print(f"****** SQL Query output is ", query_output)
-        
+        # Extract values from the query output
+        extracted_values = [item[0] for item in query_output]
+        json_output = json.dumps({"extracted_values": extracted_values}, indent=4)
+        print("***json_output: ",json_output)
+        return json_output
 
     elif "non sql" in clf_label.lower():
         print(f" inside non sql...Called rag_chain")
