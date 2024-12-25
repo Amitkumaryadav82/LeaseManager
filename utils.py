@@ -51,7 +51,7 @@ def runQuery(query):
         print("Error while executing query: ",e)
 
 if __name__== "__main__":
-    query ="select * from leasemanagerdb.lease_details;"
+    query =input("testing sql query:  ")
     # query= "How are the important terms in the lease?"
     conn=getConnection()
     cursor=conn.cursor()
