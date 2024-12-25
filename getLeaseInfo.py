@@ -157,10 +157,15 @@ def initializePromptAndChains(request):
                 ("human","{input}"),
             ]
         )
+        print("*** set prompt4")
         # General Response Chain with FAISS Retriever
         retriever = vectorstore_faiss.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+        print("***** rag chain initalized1")
         question_answer_rag_chain=create_stuff_documents_chain(llm,PROMPT4)
+        print("***** rag chain initalized2")
+
         rag_chain=create_retrieval_chain(retriever,question_answer_rag_chain)
+        print("***** rag chain initalized")
                 
         # Club SQL + Code generation chains
         # sql_code_chain = sql_chain | code_chain
@@ -200,6 +205,7 @@ def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
     elif "non sql" in clf_label.lower():
         print(f" inside non sql...Called rag_chain")
         raw_output=rag_chain.invoke({"input": request})
+        print("*****raw output ", raw_output)
         # Accessing the page_content attribute of the Document object
         page_content = raw_output["context"][0].page_content
         # Creating a dictionary with the page_content

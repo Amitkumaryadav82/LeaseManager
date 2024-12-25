@@ -112,6 +112,5 @@ Ensure that the answer is grammatically correct and does not contain any incompl
 Do not copy text directly from the lease document. Instead, provide a proper summary and then cite the references based on which the summary is generated.
 Be specific in your response. Do not provide any additional details unless required.
 
-Request: {request}
-Answer:
+{context}
 """
