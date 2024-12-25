@@ -105,7 +105,7 @@ SQLQuery:
 """
 
 template4 = """
-Use the given context and the request to answer the question.
+Use the given user request to answer the question.
 If you don't know the answer, say you don't know.
 Keep the answer concise and ensure that it is not more than 250 words.
 Ensure that the answer is grammatically correct and does not contain any incomplete sentences.

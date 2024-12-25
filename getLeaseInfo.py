@@ -199,7 +199,7 @@ def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
 
     elif "non sql" in clf_label.lower():
         print(f" inside non sql...Called rag_chain")
-        raw_output=rag_chain.invoke({"input":request})
+        raw_output=rag_chain.invoke({"input": request})
         # Accessing the page_content attribute of the Document object
         page_content = raw_output["context"][0].page_content
         # Creating a dictionary with the page_content
