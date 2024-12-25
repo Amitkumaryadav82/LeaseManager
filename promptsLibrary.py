@@ -59,6 +59,13 @@ You are a MySQL expert. Given an input request, return a syntactically correct M
 - Database Connection Info: Information required to connect to the database like host, user, password, and database name are mentioned in settings.txt file.
 - Query Format: The query should be generated in a single line and must be writted so that the qury can be executed on MYSQL database without any modifications.
 
+
+Examples of valid queries:
+Select count(lease_name) from leasemanagedb.lease_details;
+Select * from leasemanagedb.lease_details;
+Select * from leasemanagerdb.lease_details where prop_city ="Tuscon";
+
+
 Answer in the following format only:
 SQLQuery: Generated SQL Query here
 
@@ -91,10 +98,7 @@ CREATE TABLE IF NOT EXISTS leasemanagerdb.lease_details (
 
 Please note that lease_name contains the unique lease id.
 
-Examples of valid queries:
-Select count(lease_name) from leasemanagedb.lease_details;
-Select * from leasemanagedb.lease_details;
-Select * from leasemanagerdb.lease_details where prop_city ="Tuscon";
+
 
 Request: {request}
 SQLQuery: 
