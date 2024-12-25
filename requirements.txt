@@ -12,5 +12,5 @@ langchain_experimental
 langchain-aws
 python-multipart
 pymysql
-
+langchain-anthropic
 

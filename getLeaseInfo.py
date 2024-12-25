@@ -15,6 +15,8 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_community.llms import Bedrock
 from langchain_aws import BedrockEmbeddings
+from langchain_anthropic import ChatAnthropic
+
 from langchain_core.output_parsers import StrOutputParser
 from langchain_experimental.utilities import PythonREPL
 from langchain_core.tools import Tool
@@ -56,6 +58,14 @@ def initializeREPLTool():
         )
         repl.run("1+1")
         return repl
+
+def get_anthropic_llm():
+    try:
+        llm=model = ChatAnthropic(model='claude-3-opus-20240229')
+        print("**** Got Anthropic model")
+        return llm
+    except Exception as e:
+        print("****Exception while getting anthropic: {e}")
 
 def get_mistral_llm():
     try:
@@ -111,7 +121,8 @@ vectorstore_faiss = read_faiss_s3("faiss/", "capleasemanager")
 def initializePromptAndChains(request):
     try:
         # llm= get_mistral_llm()
-        llm=get_llama_llm()
+        # llm=get_llama_llm()
+        llm=get_anthropic_llm()
         print("********received llamaLLM")
         PROMPT0 = PromptTemplate(input_variables=["request"], template=template0)
         print("********** received prompt0 ")
