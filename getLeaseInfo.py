@@ -208,10 +208,11 @@ def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
         print("*****raw output ", raw_output["answer"])
         # Accessing the page_content attribute of the Document object
         answer=raw_output["answer"]
+        answer_json={"answer": answer}
         page_content = raw_output["context"][0].page_content
         # Creating a dictionary with the page_content
         page_content_json = {"page_content": page_content }
-        output = json.dumps(answer, indent=4)
+        output = json.dumps(answer_json, indent=4)
         print(output)
         
     else:
