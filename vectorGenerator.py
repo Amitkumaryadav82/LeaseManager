@@ -123,16 +123,27 @@ def create_faiss_index(documents, index_id):
         return None
 
 def save_faiss_to_s3(directory):
-    log.info(f"Calling save_faiss_to_s3 for directory {directory}")
+    print("Starting to rename and upload files from /tmp directories")
     try:
         s3 = boto3.client('s3')
-        for file in os.listdir(directory):
-            file_path = os.path.join(directory, file)
-            with open(file_path, 'rb') as f:
-                s3.put_object(Bucket=bucket_name, Key=s3_faiss + file, Body=f.read())
-        log.info(f"FAISS index saved to S3 from directory {directory}")
+        base_dir = '/tmp'
+        
+        for directory in os.listdir(base_dir):
+            dir_path = os.path.join(base_dir, directory)
+            if os.path.isdir(dir_path) and directory.startswith('faiss_index_'):
+                index_id = directory.split('_')[-1].strip()
+                for file in os.listdir(dir_path):
+                    file_path = os.path.join(dir_path, file)
+                    file_extension = file.split('.')[-1]
+                    new_file_name = f"index_{index_id}.{file_extension}"
+                    s3_key = f'{s3_faiss}{new_file_name}'
+                    print(f"Uploading {file_path} to S3 at {s3_key}")
+                    with open(file_path, 'rb') as f:
+                        s3.put_object(Bucket=bucket_name, Key=s3_key, Body=f.read())
+        print("Completed renaming and uploading files from /tmp directories")
     except Exception as e:
-        log.error(f"Error saving FAISS index to S3: {e}")
+        print(f"Error renaming and uploading files: {e}")
+
 
 def process_batch(batch, index_id):
     log.info(f"Calling process_batch for batch {index_id}")
