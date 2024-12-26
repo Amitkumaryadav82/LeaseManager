@@ -86,38 +86,49 @@ def get_llama_llm():
     except Exception as e:
         print("Exception getting Mistral: {e}")
 
-
 def read_faiss_s3(s3_key, bucket_name):
     print("************ inside read_faiss_s3")
     # List objects in the specified S3 bucket and prefix (subdirectory)
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix=s3_key)
     files = response.get('Contents', [])
     
-    # Filter to get the index.faiss and index.pkl files
-    faiss_file = next((file['Key'] for file in files if file['Key'].endswith('index.faiss')), None)
-    pkl_file = next((file['Key'] for file in files if file['Key'].endswith('index.pkl')), None)
+    # Log the files found in the S3 bucket
+    print("Files found in S3 bucket:")
+    for file in files:
+        print(file['Key'])
     
-    if not faiss_file or not pkl_file:
+    # Filter to get all the index.faiss and index.pkl files
+    faiss_files = [file['Key'] for file in files if file['Key'].endswith('.faiss')]
+    pkl_files = [file['Key'] for file in files if file['Key'].endswith('.pkl')]
+    
+    if not faiss_files or not pkl_files:
         raise FileNotFoundError("FAISS index files not found in the specified S3 bucket and prefix.")
     
-    # Download the FAISS files to a temporary directory
+    vectorstore_faiss = None
+    
     with tempfile.TemporaryDirectory() as temp_dir:
-        faiss_file_path = os.path.join(temp_dir, "index.faiss")
-        pkl_file_path = os.path.join(temp_dir, "index.pkl")
-        s3.download_file(bucket_name, faiss_file, faiss_file_path)
-        s3.download_file(bucket_name, pkl_file, pkl_file_path)
-        
-        # Verify the files were downloaded correctly
-        if not os.path.exists(faiss_file_path) or not os.path.exists(pkl_file_path):
-            raise FileNotFoundError(f"FAISS files not found at {faiss_file_path} and {pkl_file_path}")
-        
-        # Load the FAISS index with dangerous deserialization allowed
-        vectorstore_faiss = FAISS.load_local(temp_dir, bedrock_embeddings, allow_dangerous_deserialization=True)
+        for faiss_file, pkl_file in zip(faiss_files, pkl_files):
+            faiss_file_path = os.path.join(temp_dir, os.path.basename(faiss_file))
+            pkl_file_path = os.path.join(temp_dir, os.path.basename(pkl_file))
+            s3.download_file(bucket_name, faiss_file, faiss_file_path)
+            s3.download_file(bucket_name, pkl_file, pkl_file_path)
+            
+            # Verify the files were downloaded correctly
+            if not os.path.exists(faiss_file_path) or not os.path.exists(pkl_file_path):
+                raise FileNotFoundError(f"FAISS files not found at {faiss_file_path} and {pkl_file_path}")
+            
+            # Load the FAISS index with dangerous deserialization allowed
+            current_vectorstore_faiss = FAISS.load_local(temp_dir, bedrock_embeddings, allow_dangerous_deserialization=True, index_name=os.path.splitext(os.path.basename(faiss_file))[0])
+            
+            if vectorstore_faiss is None:
+                vectorstore_faiss = current_vectorstore_faiss
+            else:
+                vectorstore_faiss.merge_from(current_vectorstore_faiss)
+    
     print("********* received faiss")
     return vectorstore_faiss
 
 vectorstore_faiss = read_faiss_s3("faiss/", "capleasemanager")
-
 
 def initializePromptAndChains(request):
     try:
