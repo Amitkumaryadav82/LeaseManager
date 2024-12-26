@@ -16,6 +16,8 @@ import datetime
 from fastapi import FastAPI, HTTPException
 import uvicorn
 from logger import getLogger
+from concurrent.futures import ThreadPoolExecutor
+
 
 log=getLogger()
 
@@ -37,27 +39,29 @@ bedrock_embeddings=BedrockEmbeddings(model_id=setting.get('embedding_model'),cli
 
 #Get the documents
 def get_documents_from_s3(s3_bucket, prefix):
-    log.info("Starting to retrive documents from S3 successfully")
+    log.info("Starting to retrieve documents from S3")
 
-    s3=boto3.client("s3")
-    response = s3.list_objects_v2(Bucket=bucket_name)
-    files = response.get('Contents', [])
+    s3 = boto3.client("s3")
+    paginator = s3.get_paginator('list_objects_v2')
+    text_list = []
 
-    text_list=[] 
-    for file in files:
-        file_key = file['Key']
+    def process_file(file_key):
         if file_key.endswith('.png'):
-            # Download the file from S3
-            obj = s3.get_object(Bucket=bucket_name, Key=file_key)
+            obj = s3.get_object(Bucket=s3_bucket, Key=file_key)
             img_data = obj['Body'].read()
-            # Open the image
             image = Image.open(BytesIO(img_data))
-            # Perform OCR on the image
             text = pytesseract.image_to_string(image)
-            # Append the extracted text to the list
-            text_list.append(text)
-    log.info("Completed retriving documents from S3 successfully")
+            return text
+
+    for page in paginator.paginate(Bucket=s3_bucket, Prefix=prefix):
+        files = page.get('Contents', [])
+        with ThreadPoolExecutor() as executor:
+            results = executor.map(lambda file: process_file(file['Key']), files)
+            text_list.extend(results)
+
+    log.info("Completed retrieving documents from S3")
     return text_list
+
 
 # read the texts from the documents
 def read_text_from_files(pngfiles):
