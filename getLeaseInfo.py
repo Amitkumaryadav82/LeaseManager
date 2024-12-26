@@ -11,6 +11,10 @@ from langchain_core.prompts import ChatPromptTemplate
 # from langchain.chains import RetrievalQA
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.memory import ChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.prompts import ChatPromptTemplate
 
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_community.llms import Bedrock
@@ -48,6 +52,9 @@ bedrock_embeddings = BedrockEmbeddings(model_id=settings.get('embedding_model'),
 
 # S3 client
 s3 = boto3.client("s3")
+
+def get_session_history(session_id: str):
+    return InMemoryChatMessageHistory()
 
 def initializeREPLTool():
     ### Python tool for code execution
@@ -130,62 +137,63 @@ def read_faiss_s3(s3_key, bucket_name):
 
 vectorstore_faiss = read_faiss_s3("faiss/", "capleasemanager")
 
-def initializePromptAndChains(request):
+def initializePromptAndChains():
     try:
-        # llm= get_mistral_llm()
-        # llm=get_llama_llm()
-        llm=get_anthropic_llm()
+        llm = get_anthropic_llm()
         print("********received anthropic model")
+
+        # Initialize chat history
+        chat_history = InMemoryChatMessageHistory()
+
+        # Create prompt templates from predefined prompts
         PROMPT0 = PromptTemplate(input_variables=["request"], template=template0)
-        print("********** received prompt0 ")
-        # Classification Chain
-        clf_chain = (PROMPT0
-                    | llm
-                    | StrOutputParser()       # to get output in a more usable format
-                    )
-        print(f"********** received clfchain ")
-        
         PROMPT1 = PromptTemplate(input_variables=["request"], template=template1)
-        print("********** received prompt1 ")
-        # SQL Query Generation Chain
-        sql_chain = (PROMPT1
-                    | llm
-                    | StrOutputParser()       # to get output in a more usable format
-                    )
-
-        # PROMPT2 = PromptTemplate(input_variables=["request_plus_sqlquery"], template=template2)
-
-        # # Code Generation Chain
-        # code_chain = (PROMPT2
-        #             | llm
-        #             | StrOutputParser()       # to get output in a more usable format
-        #             )
-        print("********** SQL ChainSet ")
-
-        PROMPT4 =ChatPromptTemplate.from_messages(
+        PROMPT4 = ChatPromptTemplate.from_messages(
             [
                 ("system", template4),
-                ("human","{input}"),
+                ("human", "{input}"),
             ]
         )
-        print("*** set prompt4")
+
+        # Classification Chain
+        clf_chain = (PROMPT0
+                     | llm
+                     | StrOutputParser()       # to get output in a more usable format
+                     )
+        print(f"********** received clfchain ")
+
+        # SQL Query Generation Chain
+        sql_chain = (PROMPT1
+                     | llm
+                     | StrOutputParser()       # to get output in a more usable format
+                     )
+
         # General Response Chain with FAISS Retriever
         retriever = vectorstore_faiss.as_retriever(search_type="similarity", search_kwargs={"k": 3})
         print("***** rag chain initalized1")
-        question_answer_rag_chain=create_stuff_documents_chain(llm,PROMPT4)
+        question_answer_rag_chain = create_stuff_documents_chain(llm, PROMPT4)
         print("***** rag chain initalized2")
 
-        rag_chain=create_retrieval_chain(retriever,question_answer_rag_chain)
+        rag_chain = create_retrieval_chain(retriever, question_answer_rag_chain)
         print("***** rag chain initalized")
-                
-        # Club SQL + Code generation chains
-        # sql_code_chain = sql_chain | code_chain
-        sql_code_chain = sql_chain
-        print("*************** initialized chains")
-        return clf_chain,sql_code_chain,rag_chain
+
+        # Wrap chains with chat history using RunnableWithMessageHistory
+        clf_chain = RunnableWithMessageHistory(
+            runnable=clf_chain,
+            get_session_history=get_session_history
+        )
+        sql_code_chain = RunnableWithMessageHistory(
+            runnable=sql_chain,
+            get_session_history=get_session_history
+        )
+        rag_chain = RunnableWithMessageHistory(
+            runnable=rag_chain,
+            get_session_history=get_session_history
+        )
+
+        return clf_chain, sql_code_chain, rag_chain
     except Exception as e:
         print(f"Exception while initalizing chains: {e}")
-
 
 def extract_sql_query(response):
     # Split the response by 'SQLQuery:'
@@ -197,57 +205,52 @@ def extract_sql_query(response):
     else:
         return None
 
-def invoke_chain(request,clf_label,clf_chain,sql_code_chain,rag_chain):
+def invoke_chain(request, clf_label, clf_chain, sql_code_chain, rag_chain, config):
     if "need sql" in clf_label.lower():
         print("***** inside need sql")
-        ## Generate code for insights
-        code_response = sql_code_chain.invoke(request)
+        code_response = sql_code_chain.invoke(request, config=config)
         print(f"*********code_response:", code_response)
-        sql_query=extract_sql_query(code_response)
+        sql_query = extract_sql_query(code_response)
         print(f"****** SQL Query is ", sql_query)
-        query_output=runQuery(sql_query)
+        query_output = runQuery(sql_query)
         print(f"****** SQL Query output is ", query_output)
-        # Extract values from the query output
         extracted_values = [item[0] for item in query_output]
         output = json.dumps({"answer": extracted_values}, indent=4)
-        print("***json_output: ",output)
+        print("***json_output: ", output)
 
     elif "non sql" in clf_label.lower():
         print(f" inside non sql...Called rag_chain")
-        raw_output=rag_chain.invoke({"input": request})
+        raw_output = rag_chain.invoke({"input": request}, config=config)
         print("*****raw output ", raw_output["answer"])
-        # Accessing the page_content attribute of the Document object
-        answer=raw_output["answer"]
-        answer_json={"answer": answer}
-        # page_content = raw_output["context"][0].page_content
-        # # Creating a dictionary with the page_content
-        # page_content_json = {"page_content": page_content }
+        answer = raw_output["answer"]
+        answer_json = {"answer": answer}
         output = json.dumps(answer_json, indent=4)
         print(output)
-        
+
     else:
         print("***** inside need sql")
         output_quote = "The request is out of context."
-        answer_json={"answer": output_quote}
-        output=json.dumps(answer_json,indent=4)
+        answer_json = {"answer": output_quote}
+        output = json.dumps(answer_json, indent=4)
         print(f"********output is: {output}")
     return output
 
+
 #  Return the responses in json only
-def getLeaseInfo(request):
+def getLeaseInfo(request, session_id):
     try:
         print("**** the query is :", request)
-        clf_chain,sql_code_chain,rag_chain= initializePromptAndChains(request)
-        clf_label=clf_chain.invoke(request)
+        clf_chain, sql_code_chain, rag_chain = initializePromptAndChains()
+        config = {'configurable': {'session_id': session_id}}
+        clf_label = clf_chain.invoke(request, config=config)
         print(f" Received clf_label:  {clf_label}")
-        output=invoke_chain(request,clf_label, clf_chain,sql_code_chain,rag_chain)
+        output = invoke_chain(request, clf_label, clf_chain, sql_code_chain, rag_chain, config)
         output_json = {"response": output }
         final_output = json.dumps(output_json, indent=4)
         return final_output
     except Exception as e:
         print(f"Exception in getLease Info: {e}")
-        traceback.print_exc() 
-
+        traceback.print_exc()
 
 if __name__== "__main__":
     query = input("Please enter your query: ")
