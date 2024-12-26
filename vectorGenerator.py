@@ -1,25 +1,18 @@
-## This will be a separate lambda which will be used to generate the vectors
-
-import numpy as np
-import json
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import PyPDFDirectoryLoader
+import boto3
+import logging
+from PIL import Image
+from io import BytesIO
+import pytesseract
+from concurrent.futures import ThreadPoolExecutor
+import datetime
+import os
 from langchain.vectorstores import FAISS
 from langchain.schema import Document
-from io import BytesIO
-import boto3
-import os
-import pytesseract
-from PIL import Image
 from langchain_community.embeddings import BedrockEmbeddings
-import datetime
-from fastapi import FastAPI, HTTPException
-import uvicorn
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from logger import getLogger
-from concurrent.futures import ThreadPoolExecutor
 
-
-log=getLogger()
+log = getLogger()
 
 setting = {}
 with open('settings.txt', 'r') as file:
@@ -32,108 +25,143 @@ print(setting)
 
 bucket_name = 'capleasemanager'
 prefix = 'lease/'
-s3_faiss='faiss/'
-bedrock=boto3.client(service_name="bedrock-runtime")
-bedrock_embeddings=BedrockEmbeddings(model_id=setting.get('embedding_model'),client=bedrock)
-# app=FastAPI()
+s3_faiss = 'faiss/'
+bedrock = boto3.client(service_name="bedrock-runtime")
+bedrock_embeddings = BedrockEmbeddings(model_id=setting.get('embedding_model'), client=bedrock)
 
-#Get the documents
-def get_documents_from_s3(s3_bucket, prefix):
-    log.info("Starting to retrieve documents from S3")
+def process_file(s3_client, bucket, file_key):
+    log.info(f"Calling process_file for {file_key}")
+    try:
+        if file_key.endswith('.png'):
+            obj = s3_client.get_object(Bucket=bucket, Key=file_key)
+            img_data = obj['Body'].read()
+            image = Image.open(BytesIO(img_data))
+            
+            # Set a valid resolution if it's invalid
+            if image.info.get('dpi') is None or image.info['dpi'] == (0, 0):
+                image.info['dpi'] = (300, 300)
+            
+            text = pytesseract.image_to_string(image)
+            return text
+    except Exception as e:
+        log.error(f"Error processing file {file_key}: {e}")
+        return None
+
+def get_documents_from_s3_in_batches(s3_bucket, prefix, batch_size=100):
+    log.info("Calling get_documents_from_s3_in_batches")
+    log.info("Starting to retrieve documents from S3 in batches")
 
     s3 = boto3.client("s3")
     paginator = s3.get_paginator('list_objects_v2')
     text_list = []
+    batch = []
+    batch_number = 0
 
-    def process_file(file_key):
-        if file_key.endswith('.png'):
-            obj = s3.get_object(Bucket=s3_bucket, Key=file_key)
-            img_data = obj['Body'].read()
-            image = Image.open(BytesIO(img_data))
-            text = pytesseract.image_to_string(image)
-            return text
+    try:
+        for page in paginator.paginate(Bucket=s3_bucket, Prefix=prefix):
+            files = page.get('Contents', [])
+            for file in files:
+                batch.append(file)
+                if len(batch) == batch_size:
+                    batch_number += 1
+                    log.info(f"Processing batch number {batch_number}")
+                    try:
+                        with ThreadPoolExecutor() as executor:
+                            results = executor.map(lambda file: process_file(s3, s3_bucket, file['Key']), batch)
+                            text_list.extend(filter(None, results))
+                    except Exception as e:
+                        log.error(f"Error processing batch number {batch_number}: {e}")
+                    batch = []
 
-    for page in paginator.paginate(Bucket=s3_bucket, Prefix=prefix):
-        files = page.get('Contents', [])
-        with ThreadPoolExecutor() as executor:
-            results = executor.map(lambda file: process_file(file['Key']), files)
-            text_list.extend(results)
+        # Process any remaining files in the last batch
+        if batch:
+            batch_number += 1
+            log.info(f"Processing batch number {batch_number}")
+            try:
+                with ThreadPoolExecutor() as executor:
+                    results = executor.map(lambda file: process_file(s3, s3_bucket, file['Key']), batch)
+                    text_list.extend(filter(None, results))
+            except Exception as e:
+                log.error(f"Error processing batch number {batch_number}: {e}")
 
-    log.info("Completed retrieving documents from S3")
+    except KeyboardInterrupt:
+        log.info("Process interrupted by user")
+        return text_list
+    except Exception as e:
+        log.error(f"Error retrieving documents from S3: {e}")
+
+    log.info("Completed retrieving documents from S3 in batches")
     return text_list
 
-
-# read the texts from the documents
-def read_text_from_files(pngfiles):
-    log.info("Starting to read text from files")
-    text_list = []
-    folder_path = 'testdata/'
-    for filename in os.listdir(folder_path):
-        if filename.endswith('.png'):
-            img_path = os.path.join(folder_path, filename)
-            img = Image.open(img_path)
-            text = pytesseract.image_to_string(img)
-            text_list.append(text)
-    log.info("Successfully read text from files")
-    return text_list
-
-## This function will read the data and  split the documents into chunk
 def data_splitter(documents):
+    log.info("Calling data_splitter")
     log.info("Starting to split documents")
 
-    text_splitter=RecursiveCharacterTextSplitter(chunk_size=10000,
-                                                 chunk_overlap=1000)
-    split_texts=[]
-    for doc in documents:
+    try:
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=1000)
+        split_texts = []
+        for doc in documents:
+            chunk = text_splitter.split_text(doc)
+            split_texts.extend(chunk)
+        log.info("Completed split documents")
+        return split_texts
+    except Exception as e:
+        log.error(f"Error splitting documents: {e}")
+        return []
 
-        chunk=text_splitter.split_text(doc)
-        split_texts.extend(chunk)
-    log.info("Completed split documents")
-    return split_texts
+def create_faiss_index(documents, index_id):
+    log.info(f"Calling create_faiss_index for index {index_id}")
+    try:
+        vectorstore_faiss = FAISS.from_documents(documents, bedrock_embeddings)
+        directory = f'/tmp/faiss_index_{index_id}'
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        vectorstore_faiss.save_local(directory)
+        return directory
+    except Exception as e:
+        log.error(f"Error creating FAISS index {index_id}: {e}")
+        return None
 
-   # Generate the FAISS vectors from the documents
-def generate_faiss(split_docs):
-    log.info("Starting to generate fiass")
-    documents = [Document(page_content=text) for text in split_docs]
-    vectorstore_faiss = FAISS.from_documents(
-        documents,
-        bedrock_embeddings  
-    )
-    log.info("Completed:generate fiass")
-    return vectorstore_faiss
+def save_faiss_to_s3(directory):
+    log.info(f"Calling save_faiss_to_s3 for directory {directory}")
+    try:
+        s3 = boto3.client('s3')
+        for file in os.listdir(directory):
+            file_path = os.path.join(directory, file)
+            with open(file_path, 'rb') as f:
+                s3.put_object(Bucket=bucket_name, Key=s3_faiss + file, Body=f.read())
+        log.info(f"FAISS index saved to S3 from directory {directory}")
+    except Exception as e:
+        log.error(f"Error saving FAISS index to S3: {e}")
 
-# Save the generated FAISS vectors in S3
+def process_batch(batch, index_id):
+    log.info(f"Calling process_batch for batch {index_id}")
+    try:
+        documents = [Document(page_content=text) for text in batch]
+        directory = create_faiss_index(documents, index_id)
+        if directory:
+            save_faiss_to_s3(directory)
+    except Exception as e:
+        log.error(f"Error processing batch {index_id}: {e}")
 
-def save_faiss_s3(faiss_index):
-    log.info("Starting to save fiass in s3")
-    s3 = boto3.client('s3')
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    directory = f'/tmp/faiss_index_{timestamp}'  # Use a unique directory name with timestamp
-
-    # Ensure the directory exists
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    # Save the FAISS index to the local directory
-    faiss_index.save_local(directory)  # Save to the directory
-
-    # Read the local files and upload them to S3
-    for file in os.listdir(directory):
-        file_path = os.path.join(directory, file)
-        with open(file_path, 'rb') as f:
-            s3.put_object(Bucket=bucket_name, Key=s3_faiss + file, Body=f.read())
-
-    log.info("FAISS index saved to S3 from directory {directory}")
-
+def generate_multiple_faiss_indices(documents, batch_size=100):
+    log.info("Calling generate_multiple_faiss_indices")
+    batches = [documents[i:i + batch_size] for i in range(0, len(documents), batch_size)]
+    with ThreadPoolExecutor() as executor:
+        for index_id, batch in enumerate(batches):
+            log.info(f"Submitting batch {index_id + 1} for processing")
+            executor.submit(process_batch, batch, index_id + 1)
 
 def generate_vectors():
+    log.info("Calling generate_vectors")
     log.info("Starting to generate Vectors")
-    list_text = get_documents_from_s3(bucket_name,prefix)
-    # list_text=read_text_from_files(raw_png)
-    splitted_text= data_splitter(list_text)
-    vectorstore_faiss= generate_faiss(splitted_text)
-    save_faiss_s3(vectorstore_faiss)
-    log.info("Finished Generating Vectors")
+    try:
+        list_text = get_documents_from_s3_in_batches(bucket_name, prefix)
+        splitted_text = data_splitter(list_text)
+        generate_multiple_faiss_indices(splitted_text)
+        log.info("Finished Generating Vectors")
+    except Exception as e:
+        log.error(f"Error generating vectors: {e}")
 
-if __name__== "__main__":
-   generate_vectors()
+if __name__ == "__main__":
+    generate_vectors()
