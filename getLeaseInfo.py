@@ -24,7 +24,7 @@ from langchain_core.tools import Tool
 from langchain_community.vectorstores import FAISS
 from promptsLibrary import template0, template1, template4
 
-from utils import getSettings, runQuery
+from utils import getSettings, runQuery, get_anthropic_llm
 from logger import getLogger
 
 settings = getSettings()
@@ -40,13 +40,6 @@ bedrock_embeddings = BedrockEmbeddings(model_id=settings.get('embedding_model'),
 # S3 client
 s3 = boto3.client("s3")
 
-def get_anthropic_llm():
-    try:
-        llm = ChatAnthropic(model='claude-3-opus-20240229')
-        log.info("**** Got Anthropic model")
-        return llm
-    except Exception as e:
-        log.error(f"****Exception while getting anthropic: {e}")
 
 def get_mistral_llm():
     try:

@@ -3,6 +3,7 @@ awscli
 langchain
 numpy
 pytesseract
+pillow
 fastapi
 uvicorn
 langchain-community
@@ -14,4 +15,6 @@ python-multipart
 pymysql
 langchain-anthropic
 tesseract
-
+deepeval
+pandas
+dash

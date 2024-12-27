@@ -1,4 +1,3 @@
-
 import pymysql
 
 def getSettings():
@@ -51,6 +50,16 @@ def runQuery(query):
 
     except pymysql.MySQLError as e:
         print("Error while executing query: ",e)
+
+def get_anthropic_llm():
+    try:
+        llm = ChatAnthropic(model='claude-3-opus-20240229')
+        log.info("**** Got Anthropic model")
+        return llm
+    except Exception as e:
+        log.error(f"****Exception while getting anthropic: {e}")
+
+
 
 if __name__== "__main__":
     query =input("testing sql query:  ")
