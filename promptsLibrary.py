@@ -110,6 +110,7 @@ If you don't know the answer, say you don't know.
 Keep the answer concise and ensure that it is not more than 250 words.
 Ensure that the answer is grammatically correct and does not contain any incomplete sentences.
 Do not copy text directly from the lease document. Instead, provide a proper summary and then cite the references based on which the summary is generated.
+Always mention the lease number while providing the answer.
 Be specific in your response. Do not provide any additional details unless required.
 
 {context}
