@@ -112,7 +112,6 @@ def read_faiss_s3(s3_key, bucket_name):
     
     total_files_processed = merged_count + 1  # Including the initial assignment
     log.info(f"Total FAISS files processed: {total_files_processed}")
-    log.info("********* received faiss")
     return vectorstore_faiss    
 
 vectorstore_faiss = read_faiss_s3("faiss/", "capleasemanager")
@@ -120,20 +119,18 @@ vectorstore_faiss = read_faiss_s3("faiss/", "capleasemanager")
 def initializePromptAndChains(request, history):
     try:
         llm = get_anthropic_llm()
-        log.info("********received anthropic model")
         PROMPT0 = PromptTemplate(input_variables=["request", "history"], template=template0)
-        log.info("********** received prompt0 ")
         clf_chain = (PROMPT0
                      | llm
                      | StrOutputParser())
-        log.info(f"********** received clfchain ")
+        log.info(f"received clfchain ")
         
         PROMPT1 = PromptTemplate(input_variables=["request", "history"], template=template1)
-        log.info("********** received prompt1 ")
+        log.info("Set Prompt1")
         sql_chain = (PROMPT1
                      | llm
                      | StrOutputParser())
-        log.info("********** SQL ChainSet ")
+        log.info("Set SQL ChainSet ")
 
         PROMPT4 = ChatPromptTemplate.from_messages(
             [
@@ -141,17 +138,17 @@ def initializePromptAndChains(request, history):
                 ("human", "{input}"),
             ]
         )
-        log.info("*** set prompt4")
+        log.info("set prompt4")
         retriever = vectorstore_faiss.as_retriever(search_type="similarity", search_kwargs={"k": 3})
-        log.info("***** rag chain initalized1")
+        log.info("rag chain initalized1")
         question_answer_rag_chain = create_stuff_documents_chain(llm, PROMPT4)
-        log.info("***** rag chain initalized2")
+        log.info("rag chain initalized2")
 
         rag_chain = create_retrieval_chain(retriever, question_answer_rag_chain)
-        log.info("***** rag chain initalized")
+        log.info("rag chain initalized")
                 
         sql_code_chain = sql_chain
-        log.info("*************** initialized chains")
+        log.info("initialized chains")
         return clf_chain, sql_code_chain, rag_chain
     except Exception as e:
         log.error(f"Exception while initalizing chains: {e}")
@@ -166,40 +163,40 @@ def extract_sql_query(response):
 
 def invoke_chain(request, clf_label, clf_chain, sql_code_chain, rag_chain, history):
     if "need sql" in clf_label.lower():
-        log.info("***** inside need sql")
+        log.info("inside need sql")
         code_response = sql_code_chain.invoke({"request": request, "history": history})
-        log.info(f"*********code_response:", code_response)
+        log.info(f"code_response:", code_response)
         sql_query = extract_sql_query(code_response)
-        log.info(f"****** SQL Query is ", sql_query)
+        log.info(f"SQL Query is ", sql_query)
         query_output = runQuery(sql_query)
-        log.info(f"****** SQL Query output is ", query_output)
+        log.info(f"SQL Query output is ", query_output)
         extracted_values = [item[0] for item in query_output]
         output = json.dumps({"answer": extracted_values}, indent=4)
-        log.info("***json_output: ", output)
+        log.info("json_output: ", output)
 
     elif "non sql" in clf_label.lower():
-        log.info(f" inside non sql...Called rag_chain")
+        log.info(f"inside non sql")
         raw_output = rag_chain.invoke({"input": request, "history": history})
-        log.info(f"*****raw output: {raw_output["answer"]} " )
+        log.info(f"raw output: {raw_output["answer"]} " )
         answer = raw_output["answer"]
         answer_json = {"answer": answer}
         output = json.dumps(answer_json, indent=4)
         log.info(output)
         
     else:
-        log.info("***** inside need sql")
+        log.info("inside need sql")
         output_quote = "The request is out of context."
         answer_json = {"answer": output_quote}
         output = json.dumps(answer_json, indent=4)
-        log.info(f"********output is: {output}")
+        log.info(f"output is: {output}")
     return output
 
 def getLeaseInfo(request, history):
     try:
-        log.info("**** the query is : {request}")
+        log.info("the query is : {request}")
         clf_chain, sql_code_chain, rag_chain = initializePromptAndChains(request, history)
         clf_label = clf_chain.invoke({"request": request, "history": history})
-        log.info(f" Received clf_label:  {clf_label}")
+        log.info(f"Received clf_label:  {clf_label}")
         output = invoke_chain(request, clf_label, clf_chain, sql_code_chain, rag_chain, history)
         output_json = {"response": output}
         final_output = json.dumps(output_json, indent=4)

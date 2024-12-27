@@ -3,24 +3,32 @@ from fastapi import FastAPI, HTTPException, File, UploadFile
 from getLeaseInfo import getLeaseInfo
 from vectorGenerator import generate_vectors
 
-from typing import List
+from typing import List, Dict
 import boto3
 from botocore.exceptions import NoCredentialsError
 import io
+from pydantic import BaseModel
 
 app=FastAPI()
 app = FastAPI()
 
 s3 = boto3.client('s3')
 
-@app.post("/getLeaseInfo")
-def invokeGetLeaseInfo(query):
+# Define request and response models
+class QueryRequest(BaseModel):
+    query: str
+    history: List[Dict[str, str]]
+
+class QueryResponse(BaseModel):
+    response: str
+
+@app.post("/getLeaseInfo", response_model=QueryResponse)
+def invokeGetLeaseInfo(request: QueryRequest):
     try:
-        response =getLeaseInfo(query)
-        return response
+        response = getLeaseInfo(request.query, request.history)
+        return QueryResponse(response=response)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # Creating API
 @app.post("/generate-vectors")
