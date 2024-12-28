@@ -11,6 +11,10 @@ from langchain.schema import Document
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from logger import getLogger
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from typing import List
+from botocore.exceptions import NoCredentialsError
+import tempfile
 
 log = getLogger()
 
@@ -173,6 +177,38 @@ def generate_vectors():
         log.info("Finished Generating Vectors")
     except Exception as e:
         log.error(f"Error generating vectors: {e}")
+
+#  This function will upload the file and wil generate teh faiss and store it in S3
+def generate_and_upload_faiss(filename: str):
+    try:
+        # Placeholder for generating FAISS index
+        # Replace this with your actual FAISS index generation logic
+        faiss_index = f"Generated FAISS index for {filename}"
+        pkl_data = f"Generated PKL data for {filename}"
+        
+        # Save FAISS index and PKL data to temporary files
+        with tempfile.TemporaryDirectory() as temp_dir:
+            faiss_file_path = os.path.join(temp_dir, f"{filename}.faiss")
+            pkl_file_path = os.path.join(temp_dir, f"{filename}.pkl")
+            
+            with open(faiss_file_path, 'w') as faiss_file:
+                faiss_file.write(faiss_index)
+            
+            with open(pkl_file_path, 'w') as pkl_file:
+                pkl_file.write(pkl_data)
+            
+            # Upload FAISS index and PKL data to S3
+            with open(faiss_file_path, 'rb') as faiss_file:
+                s3.upload_fileobj(faiss_file, 'capleasemanager', f'faiss/{filename}.faiss')
+            
+            with open(pkl_file_path, 'rb') as pkl_file:
+                s3.upload_fileobj(pkl_file, 'capleasemanager', f'faiss/{filename}.pkl')
+                
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating FAISS index: {str(e)}")
+
+
+
 
 if __name__ == "__main__":
     generate_vectors()

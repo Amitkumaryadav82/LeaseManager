@@ -50,7 +50,10 @@ def upload_files(files: List[UploadFile] = File(...)):
             
             # Upload the file to S3
             s3.upload_fileobj(file_obj, 'capleasemanager', f'lease/{file.filename}')
-            #  generate vector for the newly updated file.
+            
+            # Generate FAISS index for the newly uploaded file
+            generate_and_upload_faiss(file.filename)
+            
         except NoCredentialsError:
             raise HTTPException(status_code=403, detail="Credentials not available")
         except Exception as e:
