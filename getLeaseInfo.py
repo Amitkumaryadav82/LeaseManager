@@ -39,26 +39,7 @@ bedrock_embeddings = BedrockEmbeddings(model_id=settings.get('embedding_model'),
 
 # S3 client
 s3 = boto3.client("s3")
-
-
-def get_mistral_llm():
-    try:
-        llm = Bedrock(model_id=settings.get('mistral_model'), 
-                      client=bedrock, model_kwargs={'max_tokens': 200})
-        log.info("*****got mistral LLM")
-        return llm
-    except Exception as e:
-        log.error(f"Exception getting Mistral: {e}")
-
-def get_llama_llm():
-    try:
-        llm = Bedrock(model_id=settings.get('llama_model'), 
-                      client=bedrock, model_kwargs={'max_gen_len': 512, 'top_p': 0.1})
-        log.info("*****got Llama LLM")
-        return llm
-    except Exception as e:
-        log.error(f"Exception getting Mistral: {e}")
-
+log=getLogger()
 def read_faiss_s3(s3_key, bucket_name):
     log.info("************ inside read_faiss_s3")
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix=s3_key)
@@ -111,6 +92,7 @@ vectorstore_faiss = read_faiss_s3("faiss/", "capleasemanager")
 
 def initializePromptAndChains(request, history):
     try:
+        
         llm = get_anthropic_llm()
         PROMPT0 = PromptTemplate(input_variables=["request", "history"], template=template0)
         clf_chain = (PROMPT0
@@ -119,11 +101,11 @@ def initializePromptAndChains(request, history):
         log.info(f"received clfchain ")
         
         PROMPT1 = PromptTemplate(input_variables=["request", "history"], template=template1)
-        log.info("Set Prompt1")
+        log.info(f"Set Prompt1")
         sql_chain = (PROMPT1
                      | llm
                      | StrOutputParser())
-        log.info("Set SQL ChainSet ")
+        log.info(f"Set SQL ChainSet ")
 
         PROMPT4 = ChatPromptTemplate.from_messages(
             [
@@ -131,20 +113,22 @@ def initializePromptAndChains(request, history):
                 ("human", "{input}"),
             ]
         )
-        log.info("set prompt4")
+        log.info(f"set prompt4")
         retriever = vectorstore_faiss.as_retriever(search_type="similarity", search_kwargs={"k": 3})
-        log.info("rag chain initalized1")
+        log.info(f"rag chain initalized1")
         question_answer_rag_chain = create_stuff_documents_chain(llm, PROMPT4)
-        log.info("rag chain initalized2")
+        log.info(f"rag chain initalized2")
 
         rag_chain = create_retrieval_chain(retriever, question_answer_rag_chain)
-        log.info("rag chain initalized")
+        log.info(f"rag chain initalized")
                 
         sql_code_chain = sql_chain
-        log.info("initialized chains")
+        log.info(f"initialized chains")
         return clf_chain, sql_code_chain, rag_chain
     except Exception as e:
         log.error(f"Exception while initalizing chains: {e}")
+        traceback.print_exc()
+
 
 def extract_sql_query(response):
     parts = response.split('SQLQuery:')
@@ -186,7 +170,7 @@ def invoke_chain(request, clf_label, clf_chain, sql_code_chain, rag_chain, histo
 
 def getLeaseInfo(request, history):
     try:
-        log.info("the query is : {request}")
+        log.info(f"the query is : {request}")
         clf_chain, sql_code_chain, rag_chain = initializePromptAndChains(request, history)
         clf_label = clf_chain.invoke({"request": request, "history": history})
         log.info(f"Received clf_label:  {clf_label}")

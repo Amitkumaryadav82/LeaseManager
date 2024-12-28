@@ -1,4 +1,8 @@
 import pymysql
+from langchain_anthropic import ChatAnthropic
+from logger  import getLogger
+
+log=getLogger()
 
 def getSettings():
     settings = {}
