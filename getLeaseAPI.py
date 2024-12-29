@@ -12,6 +12,10 @@ import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 import time
+from fastapi import FastAPI
+from prometheus_client import start_http_server, Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from starlette.responses import Response
+
 
 app = FastAPI()
 
@@ -82,6 +86,18 @@ def upload_files(files: List[UploadFile] = File(...)):
         finally:
             file.file.close()
     return {"message": "Files uploaded successfully"}
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    method = request.method
+    endpoint = request.url.path
+    REQUEST_COUNT.labels(method=method, endpoint=endpoint).inc()
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(process_time)
+    return response
+
 
 @app.get("/metrics")
 def metrics():
