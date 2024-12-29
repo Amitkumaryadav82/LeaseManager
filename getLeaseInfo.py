@@ -40,6 +40,7 @@ bedrock_embeddings = BedrockEmbeddings(model_id=settings.get('embedding_model'),
 # S3 client
 s3 = boto3.client("s3")
 log=getLogger()
+
 def read_faiss_s3(s3_key, bucket_name):
     log.info("************ inside read_faiss_s3")
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix=s3_key)

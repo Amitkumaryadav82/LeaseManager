@@ -14,9 +14,10 @@ from logger import getLogger
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from typing import List
 from botocore.exceptions import NoCredentialsError
-import tempfile
+import tempfile, traceback
 
 log = getLogger()
+s3 = boto3.client("s3")
 
 setting = {}
 with open('settings.txt', 'r') as file:
@@ -55,7 +56,6 @@ def get_documents_from_s3_in_batches(s3_bucket, prefix, batch_size=100):
     log.info("Calling get_documents_from_s3_in_batches")
     log.info("Starting to retrieve documents from S3 in batches")
 
-    s3 = boto3.client("s3")
     paginator = s3.get_paginator('list_objects_v2')
     text_list = []
     batch = []
@@ -205,7 +205,10 @@ def generate_and_upload_faiss(filename: str):
                 s3.upload_fileobj(pkl_file, 'capleasemanager', f'faiss/{filename}.pkl')
                 
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating FAISS index: {str(e)}")
+
+
 
 
 
