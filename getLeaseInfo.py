@@ -3,27 +3,25 @@ import os
 import boto3
 import tempfile
 import traceback
+import numpy as np
+# from sklearn.metrics import precision_score, recall_score
 
 ## LLm Models
 from langchain.prompts import PromptTemplate
 from langchain_core.prompts import ChatPromptTemplate
-
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_community.llms import Bedrock
 from langchain_aws import BedrockEmbeddings
 from langchain_anthropic import ChatAnthropic
-
 from langchain_core.output_parsers import StrOutputParser
 from langchain_experimental.utilities import PythonREPL
 from langchain_core.tools import Tool
-
-# Vector Embedding And Vector Store
 from langchain_community.vectorstores import FAISS
-from promptsLibrary import template0, template1, template4
+# from langchain_core.evaluation import BLEU, ROUGE
 
+from promptsLibrary import template0, template1, template4
 from utils import getSettings, runQuery, get_anthropic_llm
 from logger import getLogger
 
@@ -39,7 +37,7 @@ bedrock_embeddings = BedrockEmbeddings(model_id=settings.get('embedding_model'),
 
 # S3 client
 s3 = boto3.client("s3")
-log=getLogger()
+log = getLogger()
 
 def read_faiss_s3(s3_key, bucket_name):
     log.info("************ inside read_faiss_s3")
@@ -93,7 +91,6 @@ vectorstore_faiss = read_faiss_s3("faiss/", "capleasemanager")
 
 def initializePromptAndChains(request, history):
     try:
-        
         llm = get_anthropic_llm()
         PROMPT0 = PromptTemplate(input_variables=["request", "history"], template=template0)
         clf_chain = (PROMPT0
@@ -130,7 +127,6 @@ def initializePromptAndChains(request, history):
         log.error(f"Exception while initalizing chains: {e}")
         traceback.print_exc()
 
-
 def extract_sql_query(response):
     parts = response.split('SQLQuery:')
     if len(parts) > 1:
@@ -155,11 +151,17 @@ def invoke_chain(request, clf_label, clf_chain, sql_code_chain, rag_chain, histo
     elif "non sql" in clf_label.lower():
         log.info(f"inside non sql")
         raw_output = rag_chain.invoke({"input": request, "history": history})
-        log.info(f"raw output: {raw_output["answer"]} " )
+        log.info(f"raw output: {raw_output['answer']} " )
         answer = raw_output["answer"]
         answer_json = {"answer": answer}
         output = json.dumps(answer_json, indent=4)
         log.info(output)
+        
+        # Evaluate generation
+        reference_texts = [...]  # Add your reference texts here
+        # avg_bleu, avg_rouge = evaluate_generation([answer], reference_texts)
+        # log.info(f"Average BLEU Score: {avg_bleu}")
+        # log.info(f"Average ROUGE Score: {avg_rouge}")
         
     else:
         log.info("inside need sql")
@@ -183,12 +185,26 @@ def getLeaseInfo(request, history):
         log.error(f"Exception in getLease Info: {e}")
         traceback.print_exc()
 
+
+# def evaluate_generation(generated_texts, reference_texts):
+#     bleu = BLEU()
+#     rouge = ROUGE()
+    
+#     bleu_scores = [bleu.compute(generated, reference) for generated, reference in zip(generated_texts, reference_texts)]
+#     rouge_scores = [rouge.compute(generated, reference) for generated, reference in zip(generated_texts, reference_texts)]
+    
+#     avg_bleu = np.mean(bleu_scores)
+#     avg_rouge = np.mean([score['rouge-l']['f'] for score in rouge_scores])
+    
+#     return avg_bleu, avg_rouge
+
 if __name__ == "__main__":
     history = []
     while True:
         query = input("Please enter your query (or type 'exit' to quit): ")
         if query.lower() == 'exit':
             break
+
         history.append({"role": "user", "content": query})
         output_from_llm = getLeaseInfo(query, history)
         log.info("****** final output is: {output_from_llm}")

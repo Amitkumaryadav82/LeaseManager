@@ -18,3 +18,5 @@ tesseract
 deepeval
 pandas
 dash
+sacrebleu
+rouge
