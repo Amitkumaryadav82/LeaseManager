@@ -100,8 +100,9 @@ async def metrics_middleware(request: Request, call_next):
 
 
 @app.get("/metrics")
-def metrics():
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+def getMetrics():
+    avg_bleu, avg_rouge= getEvalMetrics()
+    return  avg_bleu, avg_rouge
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
