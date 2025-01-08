@@ -1,6 +1,9 @@
 name: Deploy to EC2
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       deploy:
@@ -24,6 +27,6 @@ jobs:
     - name: Deploy to EC2
       if: ${{ github.event.inputs.deploy == 'yes' }}
       run: |
-        ssh -o StrictHostKeyChecking=no ec2-user@3.145.41.180<< 'EOF'
+        ssh -o StrictHostKeyChecking=no ec2-user@3.145.41.180 << 'EOF'
          
         EOF
