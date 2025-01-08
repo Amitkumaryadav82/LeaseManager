@@ -56,7 +56,5 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no ec2-user@3.145.41.180 << 'EOF'
           cd /LeaseManager
-          git pull origin main
-          npm install
-          pm2 restart all
+         
         EOF
