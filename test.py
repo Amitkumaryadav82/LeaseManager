@@ -1,25 +1,25 @@
-from getLeaseInfo import getLeaseInfo  # Replace 'your_module' with the actual module name
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
 
-def test_continuous_queries():
-    # Initialize an empty list to store responses
-    responses = []
-    session_id = "test_session"
+# Set the working directory in the container
+WORKDIR /app
 
-    while True:
-        # Get user input
-        query = input("Please enter your query (or type 'exit' to quit): ")
-        if query.lower() == 'exit':
-            break
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-        # Get the response
-        response = getLeaseInfo(query, session_id)
-        responses.append(response)
-        print(f"Query: {query}")
-        print(f"Response: {response}")
-        print("-" * 50)
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-    # # Check if the responses are maintaining context
-    # assert len(responses) > 0, "There should be at least one response"
+# Set AWS environment variables
+ENV AWS_ACCESS_KEY_ID=your_access_key_id
+ENV AWS_SECRET_ACCESS_KEY=your_secret_access_key
+ENV AWS_DEFAULT_REGION=your_aws_region
 
-if __name__ == "__main__":
-    test_continuous_queries()
+
+# Make port 8000 available to the world outside this container
+EXPOSE 8000
+
+# Define environment variable
+ENV NAME World
+
+CMD ["uvicorn", "getleaseAPI:app", "--host", "0.0.0.0", "--port", "8000"]
