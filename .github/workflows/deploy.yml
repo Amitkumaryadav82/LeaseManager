@@ -1,0 +1,29 @@
+name: Deploy to EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Do you want to deploy the code?'
+        required: true
+        default: 'no'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+    - name: Deploy to EC2
+      if: ${{ github.event.inputs.deploy == 'yes' }}
+      run: |
+        ssh -o StrictHostKeyChecking=no ec2-user@3.145.41.180<< 'EOF'
+         
+        EOF
