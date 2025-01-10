@@ -2,7 +2,7 @@ embedding_model=amazon.titan-embed-text-v2:0
 mistral_model= mistral.mistral-7b-instruct-v0:2
 llama_model=meta.llama3-3-70b-instruct-v1:0
 
-host=leasemanager.cfa62ug8w8ku.us-east-2.rds.amazonaws.com
-user=admin
-password=AmitKumar_82
-database=leasemanagerdb
+host=
+user=
+password=
+database=
