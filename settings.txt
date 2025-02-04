@@ -2,7 +2,8 @@ embedding_model=amazon.titan-embed-text-v2:0
 mistral_model= mistral.mistral-7b-instruct-v0:2
 llama_model=meta.llama3-3-70b-instruct-v1:0
 
-host=
+host=myprojdb
+
 user=
 password=
 database=

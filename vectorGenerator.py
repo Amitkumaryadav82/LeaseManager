@@ -28,7 +28,7 @@ with open('settings.txt', 'r') as file:
 
 print(setting)
 
-bucket_name = 'capleasemanager'
+bucket_name = 'myprojlm'
 prefix = 'lease/'
 s3_faiss = 'faiss/'
 bedrock = boto3.client(service_name="bedrock-runtime")
@@ -199,18 +199,14 @@ def generate_and_upload_faiss(filename: str):
             
             # Upload FAISS index and PKL data to S3
             with open(faiss_file_path, 'rb') as faiss_file:
-                s3.upload_fileobj(faiss_file, 'capleasemanager', f'faiss/{filename}.faiss')
+                s3.upload_fileobj(faiss_file, 'myprojlm', f'faiss/{filename}.faiss')
             
             with open(pkl_file_path, 'rb') as pkl_file:
-                s3.upload_fileobj(pkl_file, 'capleasemanager', f'faiss/{filename}.pkl')
+                s3.upload_fileobj(pkl_file, 'myprojlm', f'faiss/{filename}.pkl')
                 
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating FAISS index: {str(e)}")
-
-
-
-
 
 
 if __name__ == "__main__":

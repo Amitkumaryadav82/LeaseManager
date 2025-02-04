@@ -29,7 +29,7 @@ settings = getSettings()
 log = getLogger()
 
 s3_key = "faiss/"
-s3_bucket = "capleasemanager"
+s3_bucket = "myprojlm"
 
 ## Bedrock Clients
 bedrock = boto3.client(service_name="bedrock-runtime")
@@ -87,7 +87,7 @@ def read_faiss_s3(s3_key, bucket_name):
     log.info(f"Total FAISS files processed: {total_files_processed}")
     return vectorstore_faiss    
 
-vectorstore_faiss = read_faiss_s3("faiss/", "capleasemanager")
+vectorstore_faiss = read_faiss_s3("faiss/", "myprojlm")
 
 def initializePromptAndChains(request, history):
     try:
